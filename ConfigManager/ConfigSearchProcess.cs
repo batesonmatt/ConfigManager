@@ -33,7 +33,7 @@ namespace ConfigManager
 
         private const int READ_BYTES = sizeof(long);
 
-        private string[] _pluginDirectories =
+        private readonly string[] _pluginDirectories =
         {
             "Adjuster",
             "AuditArchive",
@@ -47,11 +47,11 @@ namespace ConfigManager
             "Uploader"
         };
 
-        private string[] _subDirectoryExclusions = { "bin", "obj", "My Project", ".svn" };
+        private readonly string[] _subDirectoryExclusions = { "bin", "obj", "My Project", ".svn" };
 
         private bool _cancelled;
 
-        private DataTable _configDataTable;
+        private readonly DataTable _configDataTable;
 
         #endregion
 
@@ -155,13 +155,51 @@ namespace ConfigManager
             ReportProgressEvent?.Invoke(this, new ProgressEventArgs(percentage));
         }
 
+        private string[] GetPlugins(PluginType plugin)
+        {
+            return plugin switch
+            {
+                PluginType.Adjuster => new[] { _pluginDirectories[0] },
+                PluginType.AuditArchive => new[] { _pluginDirectories[1] },
+                PluginType.AutoDialer => new[] { _pluginDirectories[2] },
+                PluginType.BasicDBMaint => new[] { _pluginDirectories[3] },
+                PluginType.DBI_DailyActivityReport => new[] { _pluginDirectories[4] },
+                PluginType.EDI_Archive => new[] { _pluginDirectories[5] },
+                PluginType.Notes => new[] { _pluginDirectories[6] },
+                PluginType.ProfitPal => new[] { _pluginDirectories[7] },
+                PluginType.Reporter => new[] { _pluginDirectories[8] },
+                PluginType.Uploader => new[] { _pluginDirectories[9] },
+                _ => _pluginDirectories
+            };
+        }
+
+        public int GetCount()
+        {
+            if (_configDataTable is not null)
+            {
+                if (_configDataTable.Rows is not null)
+                {
+                    return _configDataTable.Rows.Count;
+                }
+            }
+
+            return 0;
+        }
+
+        public DataView GetDataView()
+        {
+            return _configDataTable?.AsDataView() ?? new();
+        }
+
         public void Cancel(object sender, CancellationEventArgs e)
         {
             _cancelled = e.Cancelled;
         }
 
-        public void Run()
+        public void Run(ConfigSearchArgs args)
         {
+            args ??= new();
+
             DirectoryInfo pluginDirectory = new(_pluginPath);
             DirectoryInfo deployDirectory = new(_deployPath);
 
@@ -184,7 +222,7 @@ namespace ConfigManager
             {
                 _configDataTable.Rows.Clear();
 
-                plugins = new(GetSearchPlugins());
+                plugins = new(GetPlugins(args.Plugin));
 
                 while (plugins.Count > 0 && !_cancelled)
                 {
@@ -250,11 +288,21 @@ namespace ConfigManager
                 }
 
                 _configDataTable.AcceptChanges();
-                configDataGrid.ItemsSource = _configDataTable.AsDataView();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not get config data.\n\nDetails:\n\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string message = $"Could not get config data.\n\nDetails:\n\n{ex.Message}";
+
+                if (ex.StackTrace is not null)
+                {
+                    message += $"\n\n{ex.StackTrace}";
+                }
+
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _cancelled = false;
             }
         }
 

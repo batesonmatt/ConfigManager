@@ -42,24 +42,36 @@ namespace ConfigManager
             _configWorker = (BackgroundWorker)FindResource("configBackgroundWorker");
 
             _searchProcess.ReportProgressEvent += BackgroundWorker_ReportProgress;
-            /* add cancel handler */
+            CancelProcessEvent += _searchProcess.Cancel;
         }
 
-        private string[] GetSearchPlugins()
+        private PluginType GetPluginType()
         {
             return pluginComboBox.SelectedIndex switch
             {
-                1 => new string[] { _pluginDirectories[0] },
-                2 => new string[] { _pluginDirectories[1] },
-                3 => new string[] { _pluginDirectories[2] },
-                4 => new string[] { _pluginDirectories[3] },
-                5 => new string[] { _pluginDirectories[4] },
-                6 => new string[] { _pluginDirectories[5] },
-                7 => new string[] { _pluginDirectories[6] },
-                8 => new string[] { _pluginDirectories[7] },
-                9 => new string[] { _pluginDirectories[8] },
-                10 => new string[] { _pluginDirectories[9] },
-                _ => _pluginDirectories
+                1 => PluginType.Adjuster,
+                2 => PluginType.AuditArchive,
+                3 => PluginType.AutoDialer,
+                4 => PluginType.BasicDBMaint,
+                5 => PluginType.DBI_DailyActivityReport,
+                6 => PluginType.EDI_Archive,
+                7 => PluginType.Notes,
+                8 => PluginType.ProfitPal,
+                9 => PluginType.Reporter,
+                10 => PluginType.Uploader,
+                _ => PluginType.All
+            };
+        }
+
+        private DateRangeType GetDateRangeType()
+        {
+            return dateComboBox.SelectedIndex switch
+            {
+                1 => DateRangeType.Today,
+                2 => DateRangeType.Week,
+                3 => DateRangeType.Month,
+                4 => DateRangeType.Year,
+                _ => DateRangeType.AllTime
             };
         }
 
@@ -70,12 +82,14 @@ namespace ConfigManager
             submitButton.IsEnabled = false;
             cancelButton.IsEnabled = true;
 
+            configProgressBar.Value = 0;
+
             if (!_configWorker.IsBusy)
             {
-                /* Consider passing argument for the plugin type and date range. */
+                ConfigSearchArgs args = new(GetPluginType(), GetDateRangeType());
 
                 // Fire the DoWork event.
-                _configWorker.RunWorkerAsync(/*argument*/);
+                _configWorker.RunWorkerAsync(args);
             }
         }
 
@@ -102,18 +116,33 @@ namespace ConfigManager
             grabButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
             deployButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
             clearSelectionButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
+
+            int selected = configDataGrid.SelectedItems.Count;
+
+            if (selected > 0)
+            {
+                selectedLabel.Content = $"{selected} items selected";
+            }
+            else
+            {
+                selectedLabel.Content = string.Empty;
+            }
         }
 
         private void ClearSelectionButton_Click(object sender, RoutedEventArgs e)
         {
             configDataGrid.UnselectAll();
+            selectedLabel.Content = string.Empty;
         }
 
         private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            /* Get argument type from e.Argument */
+            if (e.Argument is ConfigSearchArgs and not null)
+            {
+                ConfigSearchArgs args = (ConfigSearchArgs)e.Argument ?? new();
 
-            
+                _searchProcess.Run(args);
+            }
 
             // Return a Cancel value if the event was cancelled.
             if (_configWorker.CancellationPending)
@@ -123,7 +152,7 @@ namespace ConfigManager
             }
 
             // Set the Result value.
-            /* e.Result = true; */
+            e.Result = true;
         }
 
         private void BackgroundWorker_ReportProgress(object sender, ProgressEventArgs e)
@@ -162,7 +191,17 @@ namespace ConfigManager
             }
             else
             {
-                /* Handle e.Result */
+                // Populate the DataGrid.
+                if (e.Result?.GetType() == typeof(bool))
+                {
+                    bool result = (bool)e.Result;
+
+                    if (result)
+                    {
+                        configDataGrid.ItemsSource = _searchProcess.GetDataView();
+                        countLabel.Content = $"{_searchProcess.GetCount()} results";
+                    }
+                }
             }
 
             pluginComboBox.IsEnabled = true;

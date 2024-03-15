@@ -6,7 +6,8 @@
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
         xmlns:local="clr-namespace:ConfigManager"
         mc:Ignorable="d"
-        Title="Config Manager" Height="450" Width="800" FontSize="14" WindowStartupLocation="CenterScreen">
+        Title="Config Manager" Height="450" Width="800" MinHeight="250" MinWidth="200"
+        FontSize="14" WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
         <cm:BackgroundWorker x:Key="configBackgroundWorker" WorkerReportsProgress="True" WorkerSupportsCancellation="True"
@@ -31,8 +32,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="0" Grid.Column="0" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
-        <ComboBox x:Name="pluginComboBox" Grid.Row="1" Grid.Column="0" Margin="10,0,0,10" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="25">
+        <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="0" Grid.Column="0" Margin="10,10,0,0" HorizontalAlignment="Left"/>
+        <ComboBox x:Name="pluginComboBox" Grid.Row="1" Grid.Column="0" Margin="10,0,0,10" HorizontalAlignment="Stretch" Height="25">
             <ComboBoxItem Content="All" IsSelected="True" />
             <ComboBoxItem Content="Adjuster" />
             <ComboBoxItem Content="AuditArchive" />
@@ -46,8 +47,8 @@
             <ComboBoxItem Content="Uploader" />
         </ComboBox>
 
-        <Label x:Name="dateLabel" Content="Date Range" Grid.Row="0" Grid.Column="1" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-        <ComboBox x:Name="dateComboBox" Grid.Row="1" Grid.Column="1" Margin="10,0,0,10" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="25">
+        <Label x:Name="dateLabel" Content="Date Range" Grid.Row="0" Grid.Column="1" Margin="10,10,0,0" HorizontalAlignment="Left"/>
+        <ComboBox x:Name="dateComboBox" Grid.Row="1" Grid.Column="1" Margin="10,0,0,10" HorizontalAlignment="Stretch" Height="25">
             <ComboBoxItem Content="All Time" IsSelected="True" />
             <ComboBoxItem Content="Today" />
             <ComboBoxItem Content="Past Week" />
@@ -55,12 +56,15 @@
             <ComboBoxItem Content="Past Year" />
         </ComboBox>
 
-        <Button x:Name="submitButton" Content="Go" Grid.Row="1" Grid.Column="2" Margin="10,0,0,10" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="25" Click="SubmitButton_Click"/>
+        <Button x:Name="submitButton" Content="Go" Grid.Row="1" Grid.Column="2" Margin="10,0,0,10" HorizontalAlignment="Left" Width="75" Height="25" Click="SubmitButton_Click"/>
         
-        <Button x:Name="cancelButton" Content="Cancel" IsEnabled="False" Grid.Row="1" Grid.Column="3" Margin="10,0,10,10" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="25" Click="CancelButton_Click"/>
+        <Button x:Name="cancelButton" Content="Cancel" IsEnabled="False" Grid.Row="1" Grid.Column="3" Margin="10,0,10,10" HorizontalAlignment="Left" Width="75" Height="25" Click="CancelButton_Click"/>
 
-        <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="2" Grid.Column="0" Margin="10,20,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Height="25" Click="ClearSelectionButton_Click" />
-        
+        <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="2" Grid.Column="0" Margin="10,20,0,0" HorizontalAlignment="Left" Width="120" Height="25" Click="ClearSelectionButton_Click" />
+
+        <Label x:Name="selectedLabel" Grid.Row="2" Grid.Column="1" Margin="0,20,10,0" HorizontalAlignment="Left"/>
+        <Label x:Name="countLabel" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,20,10,0" HorizontalAlignment="Left"/>
+
         <DataGrid x:Name="configDataGrid" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" Margin="10" IsReadOnly="True" 
                   SelectionMode="Extended" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
                   SelectionChanged="ConfigDataGrid_SelectionChanged">

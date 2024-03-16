@@ -28,8 +28,8 @@ namespace ConfigManager
 
         #region Fields
 
-        private ConfigSearchProcess _searchProcess;
-        private BackgroundWorker _configWorker;
+        private readonly ConfigSearchProcess _searchProcess;
+        private readonly BackgroundWorker _configWorker;
         
         #endregion
 
@@ -168,9 +168,9 @@ namespace ConfigManager
             // Update progress bar if percentage changed.
             if (e.ProgressPercentage > 0)
             {
-                if ((configProgressBar.Value + e.ProgressPercentage) <= configProgressBar.Maximum)
+                if (e.ProgressPercentage <= configProgressBar.Maximum)
                 {
-                    configProgressBar.Value += e.ProgressPercentage;
+                    configProgressBar.Value = e.ProgressPercentage;
                 }
                 else
                 {
@@ -184,10 +184,14 @@ namespace ConfigManager
             if (e.Cancelled)
             {
                 MessageBox.Show("The search was cancelled.", "Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                Reset();
             }
             else if (e.Error is not null)
             {
                 MessageBox.Show($"The process encountered an error: \n{e.Error.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                Reset();
             }
             else
             {
@@ -208,6 +212,18 @@ namespace ConfigManager
             dateComboBox.IsEnabled = true;
             submitButton.IsEnabled = true;
             cancelButton.IsEnabled = false;
+        }
+
+        private void Reset()
+        {
+            try
+            {
+                configProgressBar.Value = 0;
+                countLabel.Content = string.Empty;
+                selectedLabel.Content = string.Empty;
+                configDataGrid.Items.Clear();
+            }
+            catch { }
         }
     }
 }

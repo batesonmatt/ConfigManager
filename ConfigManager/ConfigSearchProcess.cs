@@ -173,6 +173,29 @@ namespace ConfigManager
             };
         }
 
+        private static DateTime GetMinDateTime(DateTime start, DateRangeType dateRange)
+        {
+            DateTime result;
+
+            try
+            {
+                result = dateRange switch
+                {
+                    DateRangeType.Today => start.Date,
+                    DateRangeType.Week => start.AddDays(-7),
+                    DateRangeType.Month => start.AddMonths(-1),
+                    DateRangeType.Year => start.AddYears(-1),
+                    _ => DateTime.MinValue
+                };
+            }
+            catch
+            {
+                result = DateTime.MinValue;
+            }
+
+            return result;
+        }
+
         public int GetCount()
         {
             if (_configDataTable is not null)
@@ -198,10 +221,10 @@ namespace ConfigManager
 
         public void Run(ConfigSearchArgs args)
         {
-            args ??= new();
+            DateTime minDateTime;
 
-            DirectoryInfo pluginDirectory = new(_pluginPath);
-            DirectoryInfo deployDirectory = new(_deployPath);
+            DirectoryInfo pluginDirectory;
+            DirectoryInfo deployDirectory;
 
             FileInfo pluginFileInfo;
             FileInfo deployFileInfo;
@@ -209,21 +232,36 @@ namespace ConfigManager
             DateTime pluginFileModified;
             DateTime deployFileModified;
 
+            Queue<PluginConfig> pluginConfigs;
             Queue<string> plugins;
             Queue<string> configs;
 
+            PluginConfig pluginConfig;
             string plugin;
             string config;
 
             string pluginFolder;
             string deployFile;
 
+            int totalFiles;
+            int filesProcessed = 0;
+            double progress;
+
             try
             {
+                args ??= new();
+
+                pluginDirectory = new(_pluginPath);
+                deployDirectory = new(_deployPath);
+
                 _configDataTable.Rows.Clear();
 
+                minDateTime = GetMinDateTime(DateTime.Now, args.DateRange);
+
+                pluginConfigs = new();
                 plugins = new(GetPlugins(args.Plugin));
 
+                // Get all config files so we have a predetermined count for reporting progress.
                 while (plugins.Count > 0 && !_cancelled)
                 {
                     plugin = plugins.Dequeue();
@@ -236,25 +274,44 @@ namespace ConfigManager
                         while (configs.Count > 0 && !_cancelled)
                         {
                             config = configs.Dequeue();
-                            pluginFileInfo = new(config);
+                            pluginConfigs.Enqueue(new(plugin, config));
+                        }
+                    }
+                }
 
-                            if (pluginFileInfo is not null && pluginFileInfo.Directory is not null)
+                totalFiles = pluginConfigs.Count;
+
+                // Begin search.
+                while (pluginConfigs.Count > 0 && !_cancelled)
+                {
+                    pluginConfig = pluginConfigs.Dequeue();
+                    plugin = pluginConfig.PluginName;
+                    pluginFolder = Path.Combine(pluginDirectory.FullName, plugin);
+
+                    if (Directory.Exists(pluginFolder))
+                    {
+                        config = pluginConfig.ConfigFile;
+                        pluginFileInfo = new(config);
+
+                        if (pluginFileInfo is not null && pluginFileInfo.Directory is not null)
+                        {
+                            pluginFileModified = pluginFileInfo.LastWriteTime;
+
+                            if (IsValidSubDirectory(pluginDirectory, pluginFileInfo.Directory))
                             {
-                                pluginFileModified = pluginFileInfo.LastWriteTime;
+                                deployFile = Path.Combine(deployDirectory.FullName, plugin, pluginFileInfo.Name);
 
-                                if (IsValidSubDirectory(pluginDirectory, pluginFileInfo.Directory))
+                                if (File.Exists(deployFile))
                                 {
-                                    deployFile = Path.Combine(deployDirectory.FullName, plugin, pluginFileInfo.Name);
+                                    deployFileInfo = new(deployFile);
 
-                                    if (File.Exists(deployFile))
+                                    if (deployFileInfo is not null && deployFileInfo.Directory is not null)
                                     {
-                                        deployFileInfo = new(deployFile);
+                                        deployFileModified = deployFileInfo.LastWriteTime;
 
-                                        if (deployFileInfo is not null && deployFileInfo.Directory is not null)
+                                        if (pluginFileModified != deployFileModified)
                                         {
-                                            deployFileModified = deployFileInfo.LastWriteTime;
-
-                                            if (pluginFileModified != deployFileModified)
+                                            if (pluginFileModified >= minDateTime || deployFileModified >= minDateTime)
                                             {
                                                 if (!FilesEqual(pluginFileInfo, deployFileInfo))
                                                 {
@@ -274,20 +331,38 @@ namespace ConfigManager
                                             }
                                         }
                                     }
-                                    else
+                                }
+                                else
+                                {
+                                    if (pluginFileModified >= minDateTime)
                                     {
                                         _configDataTable.Rows.Add(
                                             plugin, pluginFileInfo.Name, pluginFileModified, null, _configStatusNotDeployed);
-
-                                        /* save pluginFileInfo */
                                     }
+
+                                    /* save pluginFileInfo */
                                 }
                             }
                         }
                     }
+
+                    filesProcessed++;
+
+                    // Calculate progress percentage.
+                    progress = ((filesProcessed + 1.0) / totalFiles) * 100.0;
+
+                    // Report progress.
+                    RaiseReportProgressEvent((int)progress);
                 }
 
-                _configDataTable.AcceptChanges();
+                if (_cancelled)
+                {
+                    _configDataTable.RejectChanges();
+                }
+                else
+                {
+                    _configDataTable.AcceptChanges();
+                }
             }
             catch (Exception ex)
             {

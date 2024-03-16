@@ -1,16 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
 
 namespace ConfigManager
 {
@@ -20,7 +8,7 @@ namespace ConfigManager
         {
             InitializeComponent();
 
-            userTextBox.Text = GetCurrentUserName();
+            userTextBox.Text = App.ActiveDirectoryUser.Name;
 
             if (string.IsNullOrWhiteSpace(userTextBox.Text))
             {
@@ -32,25 +20,30 @@ namespace ConfigManager
             }
         }
 
-        private static string GetCurrentUserName()
-        {
-            string username;
-
-            try
-            {
-                username = Environment.UserName;
-            }
-            catch
-            {
-                username = string.Empty;
-            }
-
-            return username;
-        }
-
         private void OK_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            okButton.IsEnabled = false;
+            cancelButton.IsEnabled = false;
+            userTextBox.IsEnabled = false;
+            passwordBox.IsEnabled = false;
+
+            if (App.StoreDB.ValidateOperator(userTextBox.Text, passwordBox.Password))
+            {
+                if (App.ActiveDirectoryUser.IsAdmin())
+                {
+                    DialogResult = true;
+                }
+            }
+
+            if (DialogResult is null)
+            {
+                MessageBox.Show("Access Denied", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+
+                okButton.IsEnabled = true;
+                cancelButton.IsEnabled = true;
+                userTextBox.IsEnabled = true;
+                passwordBox.IsEnabled = true;
+            }
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)

@@ -40,7 +40,7 @@
             <Label x:Name="passwordLabel" Content="Password" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" Margin="10,0,10,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="25"/>
             <PasswordBox x:Name="passwordBox" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" Margin="10,0,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="25"/>
 
-            <Button x:Name="okButton" Content="OK" Grid.Column="0" Grid.Row="4" Margin="10,0,10,10" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="25" Click="OK_Click"/>
+            <Button x:Name="okButton" IsDefault="True" Content="OK" Grid.Column="0" Grid.Row="4" Margin="10,0,10,10" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="25" Click="OK_Click"/>
             <Button x:Name="cancelButton" Content="Cancel" Grid.Column="1" Grid.Row="4" Margin="10,0,10,10" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="25" Click="Cancel_Click"/>
 
         </Grid>

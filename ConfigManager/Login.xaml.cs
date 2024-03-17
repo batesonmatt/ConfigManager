@@ -8,40 +8,38 @@ namespace ConfigManager
         {
             InitializeComponent();
 
-            userTextBox.Text = App.ActiveDirectoryUser.Name;
-
-            if (string.IsNullOrWhiteSpace(userTextBox.Text))
-            {
-                userTextBox.Focus();
-            }
-            else
-            {
-                passwordBox.Focus();
-            }
+            userTextBox.Text = App.ActiveDirectoryUser.GetFullDomainUserName();
+            passwordBox.Focus();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
             okButton.IsEnabled = false;
             cancelButton.IsEnabled = false;
-            userTextBox.IsEnabled = false;
+            //userTextBox.IsEnabled = false;
             passwordBox.IsEnabled = false;
 
-            if (App.StoreDB.ValidateOperator(userTextBox.Text, passwordBox.Password))
+            if (App.ActiveDirectoryUser.IsAdmin())
             {
-                if (App.ActiveDirectoryUser.IsAdmin())
+                if (App.StoreDB.ValidateOperator(App.ActiveDirectoryUser.Name, passwordBox.Password))
                 {
                     DialogResult = true;
                 }
+                else
+                {
+                    MessageBox.Show("Invalid credentials", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Invalid domain user", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
 
             if (DialogResult is null)
             {
-                MessageBox.Show("Access Denied", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-
                 okButton.IsEnabled = true;
                 cancelButton.IsEnabled = true;
-                userTextBox.IsEnabled = true;
+                //userTextBox.IsEnabled = true;
                 passwordBox.IsEnabled = true;
             }
         }

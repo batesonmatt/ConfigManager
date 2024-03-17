@@ -26,10 +26,11 @@ namespace ConfigManager
         private const string _configStatusLiveModified = "File has changes in VMServices";
         private const string _configStatusNotDeployed = "File has has not been deployed to VMServices";
 
-        private const string _deployPath = @"\\vmservices\c$\Program Files (x86)\RCA\ProcessScheduler Service\Plugins";
-        private const string _debugPath = @"C:\Code\ProcessScheduler\Scheduler.UI\bin\Debug\Plugins";
-        private const string _releasePath = @"C:\Code\ProcessScheduler\Scheduler.UI\bin\Release\Plugins";
-        private const string _pluginPath = @"C:\Code\ProcessSchedulerPlugins";
+        private readonly string _deployPath = @"\\vmservices\c$\Program Files (x86)\RCA\ProcessScheduler Service\Plugins";
+        private readonly string _schedulerPath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI");
+        private readonly string _debugPath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI\bin\Debug\Plugins");
+        private readonly string _releasePath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI\bin\Release\Plugins");
+        private readonly string _pluginPath = GetHostPath(@"Code\ProcessSchedulerPlugins");
 
         private const int READ_BYTES = sizeof(long);
 
@@ -72,6 +73,91 @@ namespace ConfigManager
         #endregion
 
         #region Methods
+
+        private static string GetHostPath(string path)
+        {
+            string result = string.Empty;
+            string host;
+
+            try
+            {
+                host = App.ActiveDirectoryUser.Host;
+
+                if (!string.IsNullOrWhiteSpace(host))
+                {
+                    result = Path.Combine(@"\\", host, "c$", path);
+                }
+            }
+            catch
+            {
+                result = string.Empty;
+            }
+
+            return result;
+        }
+
+        private bool CheckPaths()
+        {
+            bool success = true;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(App.ActiveDirectoryUser.Host))
+                {
+                    MessageBox.Show("Could not get the current host information.", "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    success = false;
+                }
+                else if (!Directory.Exists(_pluginPath))
+                {
+                    MessageBox.Show($"Path does not exist:\n\n{_pluginPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    success = false;
+                }
+                else if (!Directory.Exists(_deployPath))
+                {
+                    MessageBox.Show($"Path does not exist:\n\n{_deployPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    return false;
+                }
+                else if (Directory.Exists(_schedulerPath))
+                {
+                    if (!Directory.Exists(_debugPath))
+                    {
+                        MessageBox.Show(
+                            $"Path does not exist:\n\n{_debugPath}\n\nMake sure the project is built in Visual Studio.",
+                            "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+
+                        success = false;
+                    }
+                    else if (!Directory.Exists(_releasePath))
+                    {
+                        MessageBox.Show(
+                            $"Path does not exist:\n\n{_releasePath}\n\nMake sure the project is built in Visual Studio.",
+                            "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+
+                        success = false;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"Path does not exist:\n\n{_schedulerPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    success = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                string message = $"Could not determine status of required folders\n\nDetails:\n\n{ex.Message}";
+
+                if (ex.StackTrace is not null)
+                {
+                    message += $"\n\n{ex.StackTrace}";
+                }
+
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                success = false;
+            }
+
+            return success;
+        }
 
         private bool IsValidSubDirectory(DirectoryInfo searchDirectory, DirectoryInfo subDirectory)
         {
@@ -221,6 +307,11 @@ namespace ConfigManager
 
         public void Run(ConfigSearchArgs args)
         {
+            if (!CheckPaths())
+            {
+                return;
+            }
+
             DateTime minDateTime;
 
             DirectoryInfo pluginDirectory;

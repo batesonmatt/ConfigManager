@@ -10,6 +10,7 @@ namespace ConfigManager.Security
 
         public string Name => _name;
         public string Domain => _domain;
+        public string Host => _host;
 
         #endregion
 
@@ -17,6 +18,7 @@ namespace ConfigManager.Security
 
         private readonly string _name = GetName();
         private readonly string _domain = GetDomain();
+        private readonly string _host = GetHost();
         private readonly string _adminGroup = "Administrators";
 
         #endregion
@@ -55,6 +57,41 @@ namespace ConfigManager.Security
             return domain;
         }
 
+        private static string GetHost()
+        {
+            string host;
+
+            try
+            {
+                host = Environment.MachineName ?? string.Empty;
+            }
+            catch
+            {
+                host = string.Empty;
+            }
+
+            return host;
+        }
+
+        public string GetFullDomainUserName()
+        {
+            string name;
+            string[] login;
+
+            try
+            {
+                login = new string[] { _domain, _name };
+
+                name = string.Join(@"\", login.Where(s => !string.IsNullOrWhiteSpace(s)));
+            }
+            catch
+            {
+                name = string.Empty;
+            }
+
+            return name;
+        }
+
         public bool IsAdmin()
         {
             bool result = false;
@@ -64,6 +101,8 @@ namespace ConfigManager.Security
 
             try
             {
+                // System.Security.Principal.WindowsIdentity.GetCurrent().Name may also be used here.
+
                 domain = new(ContextType.Domain, _domain);
                 user = UserPrincipal.FindByIdentity(domain, _name);
                 group = GroupPrincipal.FindByIdentity(domain, _adminGroup);

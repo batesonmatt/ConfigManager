@@ -43,6 +43,8 @@ namespace ConfigManager
 
             _searchProcess.ReportProgressEvent += BackgroundWorker_ReportProgress;
             CancelProcessEvent += _searchProcess.Cancel;
+
+            hostLabel.Content = $"Host: {App.ActiveDirectoryUser.Host}";
         }
 
         private PluginType GetPluginType()

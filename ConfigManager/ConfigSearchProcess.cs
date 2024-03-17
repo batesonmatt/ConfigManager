@@ -7,7 +7,7 @@ using System.Windows;
 
 namespace ConfigManager
 {
-    internal class ConfigSearchProcess
+    public class ConfigSearchProcess
     {
         #region Events
 
@@ -22,7 +22,7 @@ namespace ConfigManager
 
         #region Fields
 
-        private const string _configStatusSvnModified = "File has changes in SVN";
+        private const string _configStatusLocalModified = "File has changes in local path";
         private const string _configStatusLiveModified = "File has changes in VMServices";
         private const string _configStatusNotDeployed = "File has has not been deployed to VMServices";
 
@@ -63,9 +63,10 @@ namespace ConfigManager
             _cancelled = false;
 
             _configDataTable = new DataTable();
+            _configDataTable.Columns.Add("ID", typeof(int));
             _configDataTable.Columns.Add("Plugin", typeof(string));
             _configDataTable.Columns.Add("File", typeof(string));
-            _configDataTable.Columns.Add("Modified (SVN)", typeof(DateTime));
+            _configDataTable.Columns.Add("Modified (Local)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Live)", typeof(DateTime));
             _configDataTable.Columns.Add("Status", typeof(string));
         }
@@ -338,6 +339,8 @@ namespace ConfigManager
             int filesProcessed = 0;
             double progress;
 
+            int id = 1;
+
             try
             {
                 args ??= new();
@@ -409,12 +412,16 @@ namespace ConfigManager
                                                     if (pluginFileModified > deployFileModified)
                                                     {
                                                         _configDataTable.Rows.Add(
-                                                            plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusSvnModified);
+                                                            id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLocalModified);
+
+                                                        id++;
                                                     }
                                                     else if (deployFileModified > pluginFileModified)
                                                     {
                                                         _configDataTable.Rows.Add(
-                                                            plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLiveModified);
+                                                            id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLiveModified);
+
+                                                        id++;
                                                     }
 
                                                     /* save pluginFileInfo and deployFileInfo */
@@ -428,7 +435,9 @@ namespace ConfigManager
                                     if (pluginFileModified >= minDateTime)
                                     {
                                         _configDataTable.Rows.Add(
-                                            plugin, pluginFileInfo.Name, pluginFileModified, null, _configStatusNotDeployed);
+                                            id, plugin, pluginFileInfo.Name, pluginFileModified, null, _configStatusNotDeployed);
+
+                                        id++;
                                     }
 
                                     /* save pluginFileInfo */

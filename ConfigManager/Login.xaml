@@ -35,7 +35,7 @@
             </Grid.RowDefinitions>
 
             <Label x:Name="userLabel" Content="Username" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" Margin="10,0,10,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="25"/>
-            <TextBox x:Name="userTextBox" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="10,0,10,10" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="25" TextWrapping="NoWrap"/>
+            <TextBox x:Name="userTextBox" IsEnabled="False" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="10,0,10,10" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="25" TextWrapping="NoWrap"/>
 
             <Label x:Name="passwordLabel" Content="Password" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" Margin="10,0,10,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="25"/>
             <PasswordBox x:Name="passwordBox" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" Margin="10,0,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="25"/>

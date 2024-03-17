@@ -81,7 +81,7 @@
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Status}" Value="File has changes in SVN">
+                        <DataTrigger Binding="{Binding Status}" Value="File has changes in local path">
                             <Setter Property="Background" Value="#FFC8FFC8"></Setter>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Status}" Value="File has changes in VMServices">
@@ -97,8 +97,11 @@
 
         <ProgressBar x:Name="configProgressBar" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4" Margin="10,0,10,20" Height="18"/>
 
-        <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="6" Grid.Column="0" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" Width="80" Height="25"/>
-        <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="6" Grid.Column="3" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top" Width="80" Height="25"/>
+        <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="6" Grid.Column="0" Margin="10" 
+                HorizontalAlignment="Left" Width="80" Height="25" Click="Grab_Click"/>
+        
+        <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="6" Grid.Column="3" Margin="10" 
+                HorizontalAlignment="Right" Width="80" Height="25" Click="Deploy_Click"/>
 
     </Grid>
 </Window>

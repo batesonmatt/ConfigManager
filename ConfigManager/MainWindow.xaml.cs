@@ -77,14 +77,14 @@ namespace ConfigManager
             };
         }
 
-        private void SubmitButton_Click(object sender, RoutedEventArgs e)
+        private void RenderData()
         {
             pluginComboBox.IsEnabled = false;
             dateComboBox.IsEnabled = false;
             submitButton.IsEnabled = false;
             cancelButton.IsEnabled = true;
 
-            configProgressBar.Value = 0;
+            Reset();
 
             if (!_configWorker.IsBusy)
             {
@@ -93,6 +93,11 @@ namespace ConfigManager
                 // Fire the DoWork event.
                 _configWorker.RunWorkerAsync(args);
             }
+        }
+
+        private void SubmitButton_Click(object sender, RoutedEventArgs e)
+        {
+            RenderData();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -120,7 +125,7 @@ namespace ConfigManager
             clearSelectionButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
 
             int selected = configDataGrid.SelectedItems.Count;
-
+            
             if (selected > 0)
             {
                 selectedLabel.Content = $"{selected} items selected";
@@ -223,9 +228,102 @@ namespace ConfigManager
                 configProgressBar.Value = 0;
                 countLabel.Content = string.Empty;
                 selectedLabel.Content = string.Empty;
-                configDataGrid.Items.Clear();
+                configDataGrid.ItemsSource = null;
+                configDataGrid.Items.Refresh();
             }
             catch { }
+        }
+
+        private int[] GetSelectedIds()
+        {
+            System.Collections.IList items;
+            List<int> configIds;
+            int[] result;
+            DataRowView? row;
+
+            try
+            {
+                items = configDataGrid.SelectedItems;
+                configIds = new();
+
+                if (items is not null && items.Count > 0)
+                {
+                    for (int i = 0; i < items.Count; i++)
+                    {
+                        row = items[i] as DataRowView;
+
+                        if (row is not null)
+                        {
+                            if (row["Id"] is int id)
+                            {
+                                configIds.Add(id);
+                            }
+                        }
+                    }
+                }
+
+                result = configIds.ToArray();
+            }
+            catch
+            {
+                result = Array.Empty<int>();
+            }
+
+            return result;
+        }
+
+        private void Grab_Click(object sender, RoutedEventArgs e)
+        {
+            int[] ids = GetSelectedIds();
+
+            if (ids is not null && ids.Length > 0)
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    $"You are about to grab {ids.Length} config file(s).\n\nDo you wish to proceed?\n\n", "Warning",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    grabButton.IsEnabled = false;
+                    deployButton.IsEnabled = false;
+
+                    /* Grab */
+
+                    // Re-render the DataGrid.
+                    RenderData();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No items are selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void Deploy_Click(object sender, RoutedEventArgs e)
+        {
+            int[] ids = GetSelectedIds();
+
+            if (ids is not null && ids.Length > 0)
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    $"You are about to deploy {ids.Length} config file(s).\n\nDo you wish to proceed?\n\n", "Warning", 
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    grabButton.IsEnabled = false;
+                    deployButton.IsEnabled = false;
+
+                    /* Deploy */
+
+                    // Re-render the DataGrid.
+                    RenderData();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No items are selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

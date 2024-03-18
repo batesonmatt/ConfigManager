@@ -28,7 +28,7 @@ namespace ConfigManager
 
         #region Fields
 
-        private readonly ConfigSearchProcess _searchProcess;
+        private readonly ConfigService _configService;
         private readonly BackgroundWorker _configWorker;
         
         #endregion
@@ -38,11 +38,11 @@ namespace ConfigManager
             InitializeComponent();
             DataContext = this;
 
-            _searchProcess = new ConfigSearchProcess();
+            _configService = new ConfigService();
             _configWorker = (BackgroundWorker)FindResource("configBackgroundWorker");
 
-            _searchProcess.ReportProgressEvent += BackgroundWorker_ReportProgress;
-            CancelProcessEvent += _searchProcess.Cancel;
+            _configService.ReportProgressEvent += BackgroundWorker_ReportProgress;
+            CancelProcessEvent += _configService.Cancel;
 
             hostLabel.Content = $"Host: {App.ActiveDirectoryUser.Host}";
         }
@@ -148,7 +148,7 @@ namespace ConfigManager
             {
                 ConfigSearchArgs args = (ConfigSearchArgs)e.Argument ?? new();
 
-                _searchProcess.Run(args);
+                _configService.Search(args);
             }
 
             // Return a Cancel value if the event was cancelled.
@@ -209,8 +209,8 @@ namespace ConfigManager
 
                     if (result)
                     {
-                        configDataGrid.ItemsSource = _searchProcess.GetDataView();
-                        countLabel.Content = $"{_searchProcess.GetCount()} results";
+                        configDataGrid.ItemsSource = _configService.GetDataView();
+                        countLabel.Content = $"{_configService.GetCount()} results";
                     }
                 }
             }

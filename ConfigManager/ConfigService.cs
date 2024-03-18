@@ -7,7 +7,7 @@ using System.Windows;
 
 namespace ConfigManager
 {
-    public class ConfigSearchProcess
+    public class ConfigService
     {
         #region Events
 
@@ -53,22 +53,25 @@ namespace ConfigManager
         private bool _cancelled;
 
         private readonly DataTable _configDataTable;
+        private readonly Dictionary<int, ConfigFileInfoArgs> _configFileDictionary;
 
         #endregion
 
         #region Constructors
 
-        public ConfigSearchProcess()
+        public ConfigService()
         {
             _cancelled = false;
 
-            _configDataTable = new DataTable();
+            _configDataTable = new();
             _configDataTable.Columns.Add("ID", typeof(int));
             _configDataTable.Columns.Add("Plugin", typeof(string));
             _configDataTable.Columns.Add("File", typeof(string));
             _configDataTable.Columns.Add("Modified (Local)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Live)", typeof(DateTime));
             _configDataTable.Columns.Add("Status", typeof(string));
+
+            _configFileDictionary = new();
         }
 
         #endregion
@@ -306,7 +309,7 @@ namespace ConfigManager
             _cancelled = e.Cancelled;
         }
 
-        public void Run(ConfigSearchArgs args)
+        public void Search(ConfigSearchArgs args)
         {
             if (!CheckPaths())
             {
@@ -349,6 +352,7 @@ namespace ConfigManager
                 deployDirectory = new(_deployPath);
 
                 _configDataTable.Rows.Clear();
+                _configFileDictionary.Clear();
 
                 minDateTime = GetMinDateTime(DateTime.Now, args.DateRange);
 
@@ -413,18 +417,16 @@ namespace ConfigManager
                                                     {
                                                         _configDataTable.Rows.Add(
                                                             id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLocalModified);
-
-                                                        id++;
                                                     }
                                                     else if (deployFileModified > pluginFileModified)
                                                     {
                                                         _configDataTable.Rows.Add(
                                                             id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLiveModified);
-
-                                                        id++;
                                                     }
 
-                                                    /* save pluginFileInfo and deployFileInfo */
+                                                    _configFileDictionary.Add(id, new(pluginFileInfo, deployFileInfo));
+
+                                                    id++;
                                                 }
                                             }
                                         }
@@ -437,10 +439,10 @@ namespace ConfigManager
                                         _configDataTable.Rows.Add(
                                             id, plugin, pluginFileInfo.Name, pluginFileModified, null, _configStatusNotDeployed);
 
+                                        _configFileDictionary.Add(id, new(pluginFileInfo));
+
                                         id++;
                                     }
-
-                                    /* save pluginFileInfo */
                                 }
                             }
                         }
@@ -479,6 +481,47 @@ namespace ConfigManager
             {
                 _cancelled = false;
             }
+        }
+
+        public bool Deploy(int[] configIds)
+        {
+            bool success = true;
+
+            try
+            {
+                /* foreach id in configIds, get ConfigFileInfoArgs from dictionary */
+
+                /* Check if file to be copied exists (LocalFile) */
+
+                /* If deployed file exists (LiveFile) */
+                /* Copy and overwrite LocalFile to LiveFile path*/
+                /* Call LiveFile.Refresh */
+                /* Check if LiveFile exists */
+                /* Check LiveFile.LastWriteTime == LocalFile.LastWriteTime, or set if necessary */
+
+                /* If deployed file does not exists (LiveFile) */
+                /* Create new FileInfo (deployFile) to appropriate plugin in _deployPath */
+                /* Copy and overwrite LocalFile to deployFile */
+                /* Call deployFile.Refresh */
+                /* Check if deployFile exists */
+                /* Check deployFile.LastWriteTime == LocalFile.LastWriteTime, or set if necessary */
+
+            }
+            catch (Exception ex)
+            {
+                success = false;
+
+                string message = $"Could not deploy one or more config file(s).\n\nDetails:\n\n{ex.Message}";
+
+                if (ex.StackTrace is not null)
+                {
+                    message += $"\n\n{ex.StackTrace}";
+                }
+
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return success;
         }
 
         #endregion

@@ -88,7 +88,7 @@ namespace ConfigManager
 
             if (!_configWorker.IsBusy)
             {
-                ConfigSearchArgs args = new(GetPluginType(), GetDateRangeType());
+                ConfigSearchArgs args = new(GetPluginType(), GetDateRangeType(), searchBox.Text);
 
                 // Fire the DoWork event.
                 _configWorker.RunWorkerAsync(args);
@@ -287,7 +287,7 @@ namespace ConfigManager
                     grabButton.IsEnabled = false;
                     deployButton.IsEnabled = false;
 
-                    /* Grab */
+                    _configService.Grab(ids);
 
                     // Re-render the DataGrid.
                     RenderData();

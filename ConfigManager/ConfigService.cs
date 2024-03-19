@@ -486,26 +486,66 @@ namespace ConfigManager
         public bool Deploy(int[] configIds)
         {
             bool success = true;
+            FileInfo localFile;
+            FileInfo deployFile;
+            DataRow? row;
+            string? plugin;
 
             try
             {
-                /* foreach id in configIds, get ConfigFileInfoArgs from dictionary */
+                foreach (int id in configIds)
+                {
+                    if (_configFileDictionary.ContainsKey(id))
+                    {
+                        localFile = _configFileDictionary[id].LocalFile;
+                        deployFile = _configFileDictionary[id].LiveFile;
 
-                /* Check if file to be copied exists (LocalFile) */
+                        if (localFile is not null && localFile.Exists)
+                        {
+                            // Overwrite the deployed config file with the local version.
+                            if (deployFile is not null && deployFile.Exists)
+                            {
+                                File.Copy(localFile.FullName, deployFile.FullName, overwrite: true);
+                                deployFile.Refresh();
 
-                /* If deployed file exists (LiveFile) */
-                /* Copy and overwrite LocalFile to LiveFile path*/
-                /* Call LiveFile.Refresh */
-                /* Check if LiveFile exists */
-                /* Check LiveFile.LastWriteTime == LocalFile.LastWriteTime, or set if necessary */
+                                if (deployFile.LastWriteTime != localFile.LastWriteTime)
+                                {
+                                    deployFile.LastWriteTime = localFile.LastWriteTime;
+                                    deployFile.Refresh();
+                                }
+                            }
+                            // The local config file has not been deployed yet, so copy it over to the appropriate plugin path.
+                            else
+                            {
+                                // Find the record by id.
+                                row = _configDataTable.AsEnumerable().SingleOrDefault(r => r.Field<int>("id") == id);
 
-                /* If deployed file does not exists (LiveFile) */
-                /* Create new FileInfo (deployFile) to appropriate plugin in _deployPath */
-                /* Copy and overwrite LocalFile to deployFile */
-                /* Call deployFile.Refresh */
-                /* Check if deployFile exists */
-                /* Check deployFile.LastWriteTime == LocalFile.LastWriteTime, or set if necessary */
+                                if (row is not null)
+                                {
+                                    // Get the plugin name for this config file.
+                                    plugin = row.Field<string>("Plugin");
 
+                                    if (!string.IsNullOrWhiteSpace(plugin))
+                                    {
+                                        deployFile = new(Path.Combine(_deployPath, plugin, localFile.Name));
+
+                                        if (deployFile.Directory is not null && deployFile.Directory.Exists)
+                                        {
+                                            File.Copy(localFile.FullName, deployFile.FullName, overwrite: true);
+                                            deployFile.Refresh();
+
+                                            if (deployFile.LastWriteTime != localFile.LastWriteTime)
+                                            {
+                                                deployFile.LastWriteTime = localFile.LastWriteTime;
+                                                deployFile.Refresh();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {

@@ -314,7 +314,7 @@ namespace ConfigManager
                     grabButton.IsEnabled = false;
                     deployButton.IsEnabled = false;
 
-                    /* Deploy */
+                    _configService.Deploy(ids);
 
                     // Re-render the DataGrid.
                     RenderData();

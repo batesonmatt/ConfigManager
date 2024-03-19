@@ -6,22 +6,34 @@ namespace ConfigManager
     {
         #region Properties
 
+        public string Plugin { get; } = string.Empty;
         public FileInfo LocalFile { get; } = null!;
-        public FileInfo LiveFile { get; } = null!;
+        public FileInfo DeployFile { get; } = null!;
 
         #endregion
 
         #region Constructors
 
-        public ConfigFileInfoArgs(FileInfo localFile)
+        public ConfigFileInfoArgs(string plugin, FileInfo localFile)
         {
+            Plugin = string.IsNullOrWhiteSpace(plugin) ? string.Empty : plugin;
             LocalFile = localFile;
         }
 
-        public ConfigFileInfoArgs(FileInfo localFile, FileInfo liveFile)
+        public ConfigFileInfoArgs(string plugin, FileInfo localFile, FileInfo deployFile)
         {
+            Plugin = string.IsNullOrWhiteSpace(plugin) ? string.Empty : plugin;
             LocalFile = localFile;
-            LiveFile = liveFile;
+            DeployFile = deployFile;
+        }
+
+        #endregion
+
+        #region Methods
+
+        public bool IsDeployed()
+        {
+            return DeployFile is not null && DeployFile.Exists;
         }
 
         #endregion

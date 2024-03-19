@@ -22,15 +22,21 @@ namespace ConfigManager
 
         #region Fields
 
-        private const string _configStatusLocalModified = "File has changes in local path";
-        private const string _configStatusLiveModified = "File has changes in VMServices";
-        private const string _configStatusNotDeployed = "File has has not been deployed to VMServices";
-
         private readonly string _deployPath = @"\\vmservices\c$\Program Files (x86)\RCA\ProcessScheduler Service\Plugins";
         private readonly string _schedulerPath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI");
-        private readonly string _debugPath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI\bin\Debug\Plugins");
         private readonly string _releasePath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI\bin\Release\Plugins");
+        private readonly string _debugPath = GetHostPath(@"Code\ProcessScheduler\Scheduler.UI\bin\Debug\Plugins");
         private readonly string _pluginPath = GetHostPath(@"Code\ProcessSchedulerPlugins");
+
+        private readonly Dictionary<ConfigStatus, ConfigStatusArgs> _configStatusDictionary = new()
+        {
+            { ConfigStatus.LocalModified, new(1, "File has changes in local path") },
+            { ConfigStatus.LiveModified, new(2, "File has changes in VMServices") },
+            { ConfigStatus.NotDeployed, new(3, "File has has not been deployed to VMServices") },
+            { ConfigStatus.LocalBuildModified, new(4, "File has changes in local path for one or more build output directories") },
+            { ConfigStatus.BuildModified, new(5, "File has changes in one or more build output directories") },
+            { ConfigStatus.BuildNotDeployed, new(6, "File has not been deployed to one or more build output directories") }
+        };
 
         private const int READ_BYTES = sizeof(long);
 
@@ -69,6 +75,8 @@ namespace ConfigManager
             _configDataTable.Columns.Add("File", typeof(string));
             _configDataTable.Columns.Add("Modified (Local)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Live)", typeof(DateTime));
+            _configDataTable.Columns.Add("Modified (Build)", typeof(DateTime));
+            _configDataTable.Columns.Add("StatusID", typeof(int));
             _configDataTable.Columns.Add("Status", typeof(string));
 
             _configFileDictionary = new();
@@ -240,6 +248,33 @@ namespace ConfigManager
             return true;
         }
 
+        private static bool SearchFileName(FileInfo fileInfo, string search)
+        {
+            bool result;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(search) || search.Trim() == string.Empty)
+                {
+                    result = true;
+                }
+                else if (search.IndexOfAny(Path.GetInvalidFileNameChars()) < 0)
+                {
+                    result = Path.GetFileNameWithoutExtension(fileInfo.Name).Contains(search, StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+            catch
+            {
+                result = false;
+            }
+
+            return result;
+        }
+
         private void RaiseReportProgressEvent(int percentage)
         {
             ReportProgressEvent?.Invoke(this, new ProgressEventArgs(percentage));
@@ -320,16 +355,22 @@ namespace ConfigManager
 
             DirectoryInfo pluginDirectory;
             DirectoryInfo deployDirectory;
+            DirectoryInfo releaseDirectory;
+            DirectoryInfo debugDirectory;
 
             FileInfo pluginFileInfo;
             FileInfo deployFileInfo;
+            FileInfo buildFileInfo;
 
             DateTime pluginFileModified;
             DateTime deployFileModified;
+            DateTime buildFileModified;
 
             Queue<PluginConfig> pluginConfigs;
             Queue<string> plugins;
             Queue<string> configs;
+
+            ConfigStatusArgs status;
 
             PluginConfig pluginConfig;
             string plugin;
@@ -337,11 +378,13 @@ namespace ConfigManager
 
             string pluginFolder;
             string deployFile;
+            string buildFile;
 
             int totalFiles;
             int filesProcessed = 0;
             double progress;
 
+            bool isInserted = false;
             int id = 1;
 
             try
@@ -350,6 +393,8 @@ namespace ConfigManager
 
                 pluginDirectory = new(_pluginPath);
                 deployDirectory = new(_deployPath);
+                releaseDirectory = new(_releasePath);
+                debugDirectory = new(_debugPath);
 
                 _configDataTable.Rows.Clear();
                 _configFileDictionary.Clear();
@@ -393,55 +438,190 @@ namespace ConfigManager
 
                         if (pluginFileInfo is not null && pluginFileInfo.Directory is not null)
                         {
-                            pluginFileModified = pluginFileInfo.LastWriteTime;
-
-                            if (IsValidSubDirectory(pluginDirectory, pluginFileInfo.Directory))
+                            if (SearchFileName(pluginFileInfo, args.Search))
                             {
-                                deployFile = Path.Combine(deployDirectory.FullName, plugin, pluginFileInfo.Name);
+                                pluginFileModified = pluginFileInfo.LastWriteTime;
 
-                                if (File.Exists(deployFile))
+                                if (IsValidSubDirectory(pluginDirectory, pluginFileInfo.Directory))
                                 {
-                                    deployFileInfo = new(deployFile);
+                                    deployFile = Path.Combine(deployDirectory.FullName, plugin, pluginFileInfo.Name);
 
-                                    if (deployFileInfo is not null && deployFileInfo.Directory is not null)
+                                    if (File.Exists(deployFile))
                                     {
-                                        deployFileModified = deployFileInfo.LastWriteTime;
+                                        deployFileInfo = new(deployFile);
 
-                                        if (pluginFileModified != deployFileModified)
+                                        if (deployFileInfo is not null && deployFileInfo.Directory is not null)
                                         {
-                                            if (pluginFileModified >= minDateTime || deployFileModified >= minDateTime)
+                                            deployFileModified = deployFileInfo.LastWriteTime;
+
+                                            if (pluginFileModified != deployFileModified)
                                             {
-                                                if (!FilesEqual(pluginFileInfo, deployFileInfo))
+                                                if (pluginFileModified >= minDateTime || deployFileModified >= minDateTime)
                                                 {
-                                                    if (pluginFileModified > deployFileModified)
+                                                    if (!FilesEqual(pluginFileInfo, deployFileInfo))
                                                     {
-                                                        _configDataTable.Rows.Add(
-                                                            id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLocalModified);
-                                                    }
-                                                    else if (deployFileModified > pluginFileModified)
-                                                    {
-                                                        _configDataTable.Rows.Add(
-                                                            id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, _configStatusLiveModified);
-                                                    }
+                                                        if (pluginFileModified > deployFileModified)
+                                                        {
+                                                            status = _configStatusDictionary[ConfigStatus.LocalModified];
 
-                                                    _configFileDictionary.Add(id, new(pluginFileInfo, deployFileInfo));
+                                                            _configDataTable.Rows.Add(
+                                                                id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, null, status.Id, status.Status);
+                                                        }
+                                                        else if (deployFileModified > pluginFileModified)
+                                                        {
+                                                            status = _configStatusDictionary[ConfigStatus.LiveModified];
 
-                                                    id++;
+                                                            _configDataTable.Rows.Add(
+                                                                id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, null, status.Id, status.Status);
+                                                        }
+
+                                                        _configFileDictionary.Add(id, new(plugin, pluginFileInfo, deployFileInfo));
+                                                        isInserted = true;
+
+                                                        id++;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                                else
-                                {
-                                    if (pluginFileModified >= minDateTime)
+                                    else
                                     {
-                                        _configDataTable.Rows.Add(
-                                            id, plugin, pluginFileInfo.Name, pluginFileModified, null, _configStatusNotDeployed);
+                                        if (pluginFileModified >= minDateTime)
+                                        {
+                                            status = _configStatusDictionary[ConfigStatus.NotDeployed];
 
-                                        _configFileDictionary.Add(id, new(pluginFileInfo));
+                                            _configDataTable.Rows.Add(
+                                                id, plugin, pluginFileInfo.Name, pluginFileModified, null, null, status.Id, status.Status);
 
-                                        id++;
+                                            _configFileDictionary.Add(id, new(plugin, pluginFileInfo));
+                                            isInserted = true;
+
+                                            id++;
+                                        }
+                                    }
+
+#warning "Code duplication"
+                                    // If the deployed file exists and has no differences, check the configs in the build output directories.
+                                    if (!isInserted)
+                                    {
+                                        // Check the release folder first.
+                                        buildFile = Path.Combine(releaseDirectory.FullName, plugin, pluginFileInfo.Name);
+
+                                        if (File.Exists(buildFile))
+                                        {
+                                            buildFileInfo = new(buildFile);
+
+                                            if (buildFileInfo is not null && buildFileInfo.Directory is not null)
+                                            {
+                                                buildFileModified = buildFileInfo.LastWriteTime;
+
+                                                if (pluginFileModified != buildFileModified)
+                                                {
+                                                    if (pluginFileModified >= minDateTime || buildFileModified >= minDateTime)
+                                                    {
+                                                        if (!FilesEqual(pluginFileInfo, buildFileInfo))
+                                                        {
+                                                            if (pluginFileModified > buildFileModified)
+                                                            {
+                                                                status = _configStatusDictionary[ConfigStatus.LocalBuildModified];
+
+                                                                _configDataTable.Rows.Add(
+                                                                    id, plugin, pluginFileInfo.Name, pluginFileModified, null, buildFileModified, status.Id, status.Status);
+                                                            }
+                                                            else if (buildFileModified > pluginFileModified)
+                                                            {
+                                                                status = _configStatusDictionary[ConfigStatus.BuildModified];
+
+                                                                _configDataTable.Rows.Add(
+                                                                    id, plugin, pluginFileInfo.Name, pluginFileModified, null, buildFileModified, status.Id, status.Status);
+                                                            }
+
+                                                            _configFileDictionary.Add(id, new(plugin, pluginFileInfo, buildFileInfo));
+                                                            isInserted = true;
+
+                                                            id++;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (pluginFileModified >= minDateTime)
+                                            {
+                                                status = _configStatusDictionary[ConfigStatus.BuildNotDeployed];
+
+                                                _configDataTable.Rows.Add(
+                                                    id, plugin, pluginFileInfo.Name, pluginFileModified, null, null, status.Id, status.Status);
+
+                                                _configFileDictionary.Add(id, new(plugin, pluginFileInfo));
+                                                isInserted = true;
+
+                                                id++;
+                                            }
+                                        }
+                                    }
+
+#warning "Code duplication"
+                                    // If the release file exists and has no differences, check the remaining config in the debug output directory.
+                                    if (!isInserted)
+                                    {
+                                        // Check the debug folder now.
+                                        buildFile = Path.Combine(debugDirectory.FullName, plugin, pluginFileInfo.Name);
+
+                                        if (File.Exists(buildFile))
+                                        {
+                                            buildFileInfo = new(buildFile);
+
+                                            if (buildFileInfo is not null && buildFileInfo.Directory is not null)
+                                            {
+                                                buildFileModified = buildFileInfo.LastWriteTime;
+
+                                                if (pluginFileModified != buildFileModified)
+                                                {
+                                                    if (pluginFileModified >= minDateTime || buildFileModified >= minDateTime)
+                                                    {
+                                                        if (!FilesEqual(pluginFileInfo, buildFileInfo))
+                                                        {
+                                                            if (pluginFileModified > buildFileModified)
+                                                            {
+                                                                status = _configStatusDictionary[ConfigStatus.LocalBuildModified];
+
+                                                                _configDataTable.Rows.Add(
+                                                                    id, plugin, pluginFileInfo.Name, pluginFileModified, null, buildFileModified, status.Id, status.Status);
+                                                            }
+                                                            else if (buildFileModified > pluginFileModified)
+                                                            {
+                                                                status = _configStatusDictionary[ConfigStatus.BuildModified];
+
+                                                                _configDataTable.Rows.Add(
+                                                                    id, plugin, pluginFileInfo.Name, pluginFileModified, null, buildFileModified, status.Id, status.Status);
+                                                            }
+
+                                                            _configFileDictionary.Add(id, new(plugin, pluginFileInfo, buildFileInfo));
+                                                            isInserted = true;
+
+                                                            id++;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (pluginFileModified >= minDateTime)
+                                            {
+                                                status = _configStatusDictionary[ConfigStatus.BuildNotDeployed];
+
+                                                _configDataTable.Rows.Add(
+                                                    id, plugin, pluginFileInfo.Name, pluginFileModified, null, null, status.Id, status.Status);
+
+                                                _configFileDictionary.Add(id, new(plugin, pluginFileInfo));
+                                                isInserted = true;
+
+                                                id++;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -449,6 +629,7 @@ namespace ConfigManager
                     }
 
                     filesProcessed++;
+                    isInserted = false;
 
                     // Calculate progress percentage.
                     progress = ((filesProcessed + 1.0) / totalFiles) * 100.0;
@@ -483,62 +664,47 @@ namespace ConfigManager
             }
         }
 
+        // Copy and overwrite config files from the local plugin path to the live, release, and debug paths.
         public bool Deploy(int[] configIds)
         {
             bool success = true;
             FileInfo localFile;
-            FileInfo deployFile;
-            DataRow? row;
-            string? plugin;
+            FileInfo copyFile;
+            string plugin;
+
+            string[] copyPaths;
 
             try
             {
+                copyPaths = new string[] { _deployPath, _releasePath, _debugPath };
+
                 foreach (int id in configIds)
                 {
                     if (_configFileDictionary.ContainsKey(id))
                     {
                         localFile = _configFileDictionary[id].LocalFile;
-                        deployFile = _configFileDictionary[id].LiveFile;
 
                         if (localFile is not null && localFile.Exists)
                         {
-                            // Overwrite the deployed config file with the local version.
-                            if (deployFile is not null && deployFile.Exists)
+                            // Get the plugin name for this config file.
+                            plugin = _configFileDictionary[id].Plugin;
+
+                            if (!string.IsNullOrWhiteSpace(plugin))
                             {
-                                File.Copy(localFile.FullName, deployFile.FullName, overwrite: true);
-                                deployFile.Refresh();
-
-                                if (deployFile.LastWriteTime != localFile.LastWriteTime)
+                                foreach (string copyPath in copyPaths)
                                 {
-                                    deployFile.LastWriteTime = localFile.LastWriteTime;
-                                    deployFile.Refresh();
-                                }
-                            }
-                            // The local config file has not been deployed yet, so copy it over to the appropriate plugin path.
-                            else
-                            {
-                                // Find the record by id.
-                                row = _configDataTable.AsEnumerable().SingleOrDefault(r => r.Field<int>("id") == id);
+                                    copyFile = new(Path.Combine(copyPath, plugin, localFile.Name));
 
-                                if (row is not null)
-                                {
-                                    // Get the plugin name for this config file.
-                                    plugin = row.Field<string>("Plugin");
-
-                                    if (!string.IsNullOrWhiteSpace(plugin))
+                                    if (copyFile.Directory is not null && copyFile.Directory.Exists)
                                     {
-                                        deployFile = new(Path.Combine(_deployPath, plugin, localFile.Name));
+                                        // Overwrite the existing config file, if it exists.
+                                        File.Copy(localFile.FullName, copyFile.FullName, overwrite: true);
+                                        copyFile.Refresh();
 
-                                        if (deployFile.Directory is not null && deployFile.Directory.Exists)
+                                        if (copyFile.LastWriteTime != localFile.LastWriteTime)
                                         {
-                                            File.Copy(localFile.FullName, deployFile.FullName, overwrite: true);
-                                            deployFile.Refresh();
-
-                                            if (deployFile.LastWriteTime != localFile.LastWriteTime)
-                                            {
-                                                deployFile.LastWriteTime = localFile.LastWriteTime;
-                                                deployFile.Refresh();
-                                            }
+                                            copyFile.LastWriteTime = localFile.LastWriteTime;
+                                            copyFile.Refresh();
                                         }
                                     }
                                 }
@@ -552,6 +718,76 @@ namespace ConfigManager
                 success = false;
 
                 string message = $"Could not deploy one or more config file(s).\n\nDetails:\n\n{ex.Message}";
+
+                if (ex.StackTrace is not null)
+                {
+                    message += $"\n\n{ex.StackTrace}";
+                }
+
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return success;
+        }
+
+        // Copy and overwrite config files from their deployed paths to the local plugin, release, and debug paths.
+        public bool Grab(int[] configIds)
+        {
+            bool success = true;
+            FileInfo deployFile;
+            FileInfo copyFile;
+            string plugin;
+
+            string[] copyPaths;
+
+            try
+            {
+                copyPaths = new string[] { _pluginPath, _releasePath, _debugPath };
+
+                foreach (int id in configIds)
+                {
+                    if (_configFileDictionary.ContainsKey(id))
+                    {
+                        // We can't grab the file if it has not yet been deployed (i.e., the file does not exist).
+                        if (_configFileDictionary[id].IsDeployed())
+                        {
+                            deployFile = _configFileDictionary[id].DeployFile;
+
+                            if (deployFile is not null && deployFile.Exists)
+                            {
+                                // Get the plugin name for this config file.
+                                plugin = _configFileDictionary[id].Plugin;
+
+                                if (!string.IsNullOrWhiteSpace(plugin))
+                                {
+                                    foreach (string copyPath in copyPaths)
+                                    {
+                                        copyFile = new(Path.Combine(copyPath, plugin, deployFile.Name));
+
+                                        if (copyFile.Directory is not null && copyFile.Directory.Exists)
+                                        {
+                                            // Overwrite the existing config file, if it exists.
+                                            File.Copy(deployFile.FullName, copyFile.FullName, overwrite: true);
+                                            copyFile.Refresh();
+
+                                            if (copyFile.LastWriteTime != deployFile.LastWriteTime)
+                                            {
+                                                copyFile.LastWriteTime = deployFile.LastWriteTime;
+                                                copyFile.Refresh();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                success = false;
+
+                string message = $"Could not grab one or more config file(s).\n\nDetails:\n\n{ex.Message}";
 
                 if (ex.StackTrace is not null)
                 {

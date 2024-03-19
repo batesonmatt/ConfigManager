@@ -4,8 +4,8 @@
     {
         #region Properties
 
+        public string Search { get; } = string.Empty;
         public PluginType Plugin { get; }
-
         public DateRangeType DateRange { get; }
 
         #endregion
@@ -18,10 +18,11 @@
             DateRange = DateRangeType.AllTime;
         }
 
-        public ConfigSearchArgs(PluginType plugin, DateRangeType dateRange)
+        public ConfigSearchArgs(PluginType plugin, DateRangeType dateRange, string search)
         {
             Plugin = plugin;
             DateRange = dateRange;
+            Search = string.IsNullOrWhiteSpace(search) ? string.Empty : search;
         }
 
         #endregion

@@ -9,7 +9,7 @@
         Title="Config Manager"
         Height="540" Width="840"
         MinHeight="500" MinWidth="600"
-        FontSize="14" WindowStartupLocation="CenterScreen" Background="AliceBlue">
+        FontSize="14" WindowStartupLocation="CenterScreen" Background="AliceBlue" BorderThickness="1">
 
     <Window.Resources>
         <cm:BackgroundWorker x:Key="configBackgroundWorker" WorkerReportsProgress="True" WorkerSupportsCancellation="True"
@@ -17,6 +17,10 @@
                              RunWorkerCompleted="BackgroundWorker_RunWorkerCompleted">
         </cm:BackgroundWorker>
     </Window.Resources>
+    
+    <Window.BorderBrush>
+        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}"/>
+    </Window.BorderBrush>
 
     <Grid>
         <Grid.ColumnDefinitions>

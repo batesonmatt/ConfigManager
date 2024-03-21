@@ -52,7 +52,7 @@
         </Label>
 
         <Label x:Name="searchLabel" Content="Search by Name" Grid.Row="1" Grid.Column="0" Margin="10,0,5,0" HorizontalAlignment="Left"/>
-        <TextBox x:Name="searchBox" Grid.Row="2" Grid.Column="0" Margin="10,0,5,10" HorizontalAlignment="Stretch" Height="25" TextAlignment="Left" MaxLength="50" TextWrapping="NoWrap" />
+        <TextBox x:Name="searchBox" Grid.Row="2" Grid.Column="0" Margin="10,0,5,10" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Height="25" TextAlignment="Left" MaxLength="50" TextWrapping="NoWrap" />
 
         <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="1" Grid.Column="1" Margin="5,0,5,0" HorizontalAlignment="Left"/>
         <ComboBox x:Name="pluginComboBox" Grid.Row="2" Grid.Column="1" Margin="5,0,5,10" HorizontalAlignment="Stretch" Height="25">

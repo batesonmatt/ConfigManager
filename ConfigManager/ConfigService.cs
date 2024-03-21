@@ -32,7 +32,7 @@ namespace ConfigManager
         {
             { ConfigStatus.LocalModified, new(1, "File has changes in local path") },
             { ConfigStatus.LiveModified, new(2, "File has changes in VMServices") },
-            { ConfigStatus.NotDeployed, new(3, "File has has not been deployed to VMServices") },
+            { ConfigStatus.NotDeployed, new(3, "File has not been deployed to VMServices") },
             { ConfigStatus.LocalBuildModified, new(4, "File has changes in local path for one or more build output directories") },
             { ConfigStatus.BuildModified, new(5, "File has changes in one or more build output directories") },
             { ConfigStatus.BuildNotDeployed, new(6, "File has not been deployed to one or more build output directories") }

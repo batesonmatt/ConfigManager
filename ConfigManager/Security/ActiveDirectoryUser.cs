@@ -19,7 +19,7 @@ namespace ConfigManager.Security
         private readonly string _name = GetName();
         private readonly string _domain = GetDomain();
         private readonly string _host = GetHost();
-        private readonly string _adminGroup = "Administrators";
+        private readonly string _adminGroup = "IS_Software@resource-corp.com";
 
         #endregion
 
@@ -98,6 +98,7 @@ namespace ConfigManager.Security
             PrincipalContext domain;
             UserPrincipal user;
             GroupPrincipal group;
+            PrincipalSearchResult<Principal> members;
 
             try
             {
@@ -107,12 +108,10 @@ namespace ConfigManager.Security
                 user = UserPrincipal.FindByIdentity(domain, _name);
                 group = GroupPrincipal.FindByIdentity(domain, _adminGroup);
 
-                if (user is not null)
+                if (user is not null && group is not null)
                 {
-                    if (group is not null)
-                    {
-                        result = group.GetMembers(recursive: true).Contains(user);
-                    }
+                    members = group.GetMembers(recursive: true);
+                    result = members.Contains(user);
                 }
             }
             catch

@@ -2,6 +2,7 @@
 {
     public enum ConfigStatus
     {
+        Good,
         LocalModified,
         LiveModified,
         NotDeployed,

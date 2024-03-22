@@ -735,6 +735,7 @@ namespace ConfigManager
         {
             bool success = true;
             FileInfo deployFile;
+            FileInfo localFile;
             FileInfo copyFile;
             string plugin;
 
@@ -742,7 +743,7 @@ namespace ConfigManager
 
             try
             {
-                copyPaths = new string[] { _pluginPath, _releasePath, _debugPath };
+                copyPaths = new string[] { _releasePath, _debugPath };
 
                 foreach (int id in configIds)
                 {
@@ -752,9 +753,21 @@ namespace ConfigManager
                         if (_configFileDictionary[id].IsDeployed())
                         {
                             deployFile = _configFileDictionary[id].DeployFile;
+                            localFile = _configFileDictionary[id].LocalFile;
 
-                            if (deployFile is not null && deployFile.Exists)
+                            if (deployFile is not null && deployFile.Exists && localFile is not null && localFile.Exists)
                             {
+                                // When copying over to the local plugin path, use the saved path in the dictionary.
+                                // Overwrite the existing local config file.
+                                File.Copy(deployFile.FullName, localFile.FullName, overwrite: true);
+                                localFile.Refresh();
+
+                                if (localFile.LastWriteTime != deployFile.LastWriteTime)
+                                {
+                                    localFile.LastWriteTime = deployFile.LastWriteTime;
+                                    localFile.Refresh();
+                                }
+
                                 // Get the plugin name for this config file.
                                 plugin = _configFileDictionary[id].Plugin;
 

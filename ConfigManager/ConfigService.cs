@@ -787,14 +787,18 @@ namespace ConfigManager
 
                                         if (copyFile.Directory is not null && copyFile.Directory.Exists)
                                         {
-                                            // Overwrite the existing config file, if it exists.
-                                            File.Copy(deployFile.FullName, copyFile.FullName, overwrite: true);
-                                            copyFile.Refresh();
-
-                                            if (copyFile.LastWriteTime != deployFile.LastWriteTime)
+                                            // Do not attempt to copy the file to the same path.
+                                            if (deployFile.FullName != copyFile.FullName)
                                             {
-                                                copyFile.LastWriteTime = deployFile.LastWriteTime;
+                                                // Overwrite the existing config file, if it exists.
+                                                File.Copy(deployFile.FullName, copyFile.FullName, overwrite: true);
                                                 copyFile.Refresh();
+
+                                                if (copyFile.LastWriteTime != deployFile.LastWriteTime)
+                                                {
+                                                    copyFile.LastWriteTime = deployFile.LastWriteTime;
+                                                    copyFile.Refresh();
+                                                }
                                             }
                                         }
                                     }

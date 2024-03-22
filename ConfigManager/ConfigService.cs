@@ -35,7 +35,8 @@ namespace ConfigManager
             { ConfigStatus.NotDeployed, new(3, "File has not been deployed to VMServices") },
             { ConfigStatus.LocalBuildModified, new(4, "File has changes in local path for one or more build output directories") },
             { ConfigStatus.BuildModified, new(5, "File has changes in one or more build output directories") },
-            { ConfigStatus.BuildNotDeployed, new(6, "File has not been deployed to one or more build output directories") }
+            { ConfigStatus.BuildNotDeployed, new(6, "File has not been deployed to one or more build output directories") },
+            { ConfigStatus.Good, new(7, "File is up to date in all paths") }
         };
 
         private const int READ_BYTES = sizeof(long);
@@ -623,6 +624,13 @@ namespace ConfigManager
                                             }
                                         }
                                     }
+
+//#warning "Code duplication"
+//                                    // The file is up to date in all paths.
+//                                    if (!isInserted)
+//                                    {
+//                                        // Insert as ConfigStatus.Good
+//                                    }
                                 }
                             }
                         }

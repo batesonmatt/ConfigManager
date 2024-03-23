@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -20,6 +21,7 @@ namespace ConfigManager
 
         private readonly ConfigService _configService;
         private readonly BackgroundWorker _configWorker;
+        private int _selectedGoodRecords;
         
         #endregion
 
@@ -35,6 +37,8 @@ namespace ConfigManager
             CancelProcessEvent += _configService.Cancel;
 
             hostLabel.Content = $"Host: {App.ActiveDirectoryUser.Host}";
+
+            _selectedGoodRecords = 0;
         }
 
         private PluginType GetPluginType()
@@ -110,12 +114,22 @@ namespace ConfigManager
 
         private void ConfigDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            grabButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
-            deployButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
+            if (e.AddedItems.Count > 0)
+            {
+                _selectedGoodRecords += GetGoodRecordCount(e.AddedItems);
+            }
+            
+            if (e.RemovedItems.Count > 0)
+            {
+                _selectedGoodRecords -= GetGoodRecordCount(e.RemovedItems);
+            }
+
+            grabButton.IsEnabled = configDataGrid.SelectedIndex >= 0 && _selectedGoodRecords == 0;
+            deployButton.IsEnabled = configDataGrid.SelectedIndex >= 0 && _selectedGoodRecords == 0;
             clearSelectionButton.IsEnabled = configDataGrid.SelectedIndex >= 0;
 
             int selected = configDataGrid.SelectedItems.Count;
-            
+
             if (selected > 0)
             {
                 selectedLabel.Content = $"{selected} items selected";
@@ -124,12 +138,23 @@ namespace ConfigManager
             {
                 selectedLabel.Content = string.Empty;
             }
+
+            if (_selectedGoodRecords > 0)
+            {
+                errorLabel.Content = "There are files selected that have no changes to deploy/grab";
+            }
+            else
+            {
+                errorLabel.Content = string.Empty;
+            }
         }
 
         private void ClearSelectionButton_Click(object sender, RoutedEventArgs e)
         {
             configDataGrid.UnselectAll();
             selectedLabel.Content = string.Empty;
+            errorLabel.Content = string.Empty;
+            _selectedGoodRecords = 0;
         }
 
         private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -218,15 +243,45 @@ namespace ConfigManager
                 configProgressBar.Value = 0;
                 countLabel.Content = string.Empty;
                 selectedLabel.Content = string.Empty;
+                errorLabel.Content = string.Empty;
                 configDataGrid.ItemsSource = null;
                 configDataGrid.Items.Refresh();
             }
             catch { }
         }
 
+        private int GetGoodRecordCount(IList items)
+        {
+            int count = 0;
+            DataRowView? row;
+
+            try
+            {
+                if (items is not null && items.Count > 0)
+                {
+                    for (int i = 0; i < items.Count; i++)
+                    {
+                        row = items[i] as DataRowView;
+
+                        if (row is not null && row["StatusId"] is int id)
+                        {
+                            if (id == 7)
+                            {
+                                count++;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            { }
+
+            return count;
+        }
+
         private int[] GetSelectedIds()
         {
-            System.Collections.IList items;
+            IList items;
             List<int> configIds;
             int[] result;
             DataRowView? row;
@@ -242,12 +297,9 @@ namespace ConfigManager
                     {
                         row = items[i] as DataRowView;
 
-                        if (row is not null)
+                        if (row is not null && row["Id"] is int id)
                         {
-                            if (row["Id"] is int id)
-                            {
-                                configIds.Add(id);
-                            }
+                            configIds.Add(id);
                         }
                     }
                 }
@@ -313,6 +365,18 @@ namespace ConfigManager
             else
             {
                 MessageBox.Show("No items are selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void DataGridRow_PreviewMouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is not null && sender is DataGridRow row)
+            {
+                if (configDataGrid.SelectedItems is not null && configDataGrid.SelectedItems.Count > 1)
+                {
+                    configDataGrid.UnselectAll();
+                    row.IsSelected = true;
+                }
             }
         }
     }

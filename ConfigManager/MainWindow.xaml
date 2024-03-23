@@ -17,7 +17,7 @@
                              RunWorkerCompleted="BackgroundWorker_RunWorkerCompleted">
         </cm:BackgroundWorker>
     </Window.Resources>
-    
+
     <Window.BorderBrush>
         <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}"/>
     </Window.BorderBrush>
@@ -107,15 +107,24 @@
 
         <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="5" Grid.Column="0" Margin="10,20,0,0" 
                 HorizontalAlignment="Left" Width="120" Height="30" Click="ClearSelectionButton_Click" />
-        
+
         <Label x:Name="selectedLabel" Grid.Row="5" Grid.Column="1" Margin="0,20,10,0" HorizontalAlignment="Right"/>
         <Label x:Name="countLabel" Grid.Row="5" Grid.Column="2" Margin="0,20,10,0" HorizontalAlignment="Right"/>
 
         <DataGrid x:Name="configDataGrid" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" IsReadOnly="True" 
-                  SelectionMode="Extended" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
+                  SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
                   SelectionChanged="ConfigDataGrid_SelectionChanged">
+            <DataGrid.Resources>
+                <ContextMenu  x:Key="RowMenu" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="Edit Local..." />
+                </ContextMenu>
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"  Color="{x:Static SystemColors.HighlightColor}"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"  Color="{x:Static SystemColors.HighlightTextColor}"/>
+            </DataGrid.Resources>
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
+                    <Setter Property="ContextMenu" Value="{StaticResource RowMenu}" />
+                    <EventSetter Event="PreviewMouseRightButtonUp" Handler="DataGridRow_PreviewMouseRightButtonUp"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding StatusID}" Value="1">
                             <Setter Property="Background" Value="#FFC8FFC8"></Setter>
@@ -135,6 +144,13 @@
                         <DataTrigger Binding="{Binding StatusID}" Value="6">
                             <Setter Property="Background" Value="#FFE4C8E4"></Setter>
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding StatusID}" Value="7">
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="{StaticResource {x:Static SystemColors.ControlLightLightColorKey}}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
@@ -153,9 +169,11 @@
 
         <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="9" Grid.Column="0" Margin="10,10,10,20" 
                 HorizontalAlignment="Left" Width="80" Height="30" Click="Grab_Click"/>
-        
+
         <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="9" Grid.Column="2" Margin="10,10,10,20" 
                 HorizontalAlignment="Right" Width="80" Height="30" Click="Deploy_Click"/>
 
+        <Label x:Name="errorLabel" Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,20" 
+               FontStyle="Italic" HorizontalAlignment="Center"/>
     </Grid>
 </Window>

@@ -30,13 +30,13 @@ namespace ConfigManager
 
         private readonly Dictionary<ConfigStatus, ConfigStatusArgs> _configStatusDictionary = new()
         {
-            { ConfigStatus.LocalModified, new(1, "File has changes in local path", "Deploy") },
+            { ConfigStatus.LocalModified, new(1, "File has changes in local plugin directory", "Deploy") },
             { ConfigStatus.LiveModified, new(2, "File has changes in VMServices", "Grab") },
             { ConfigStatus.NotDeployed, new(3, "File has not been deployed to VMServices", "Deploy") },
-            { ConfigStatus.LocalBuildModified, new(4, "File has changes in local path for one or more build output directories", "Deploy") },
-            { ConfigStatus.BuildModified, new(5, "File has changes in one or more build output directories", "Deploy") },
-            { ConfigStatus.BuildNotDeployed, new(6, "File has not been deployed to one or more build output directories", "Deploy") },
-            { ConfigStatus.Good, new(7, "File is up to date in all paths") }
+            { ConfigStatus.ReleaseModified, new(4, "File has changes in Release directory", "Deploy") },
+            { ConfigStatus.DebugModified, new(5, "File has changes in Debug directory", "Deploy") },
+            { ConfigStatus.BuildModified, new(6, "File has changes in build output directories", "Deploy") },
+            { ConfigStatus.Good, new(7, "File is up to date in all directories") }
         };
 
         private readonly string[] _pluginDirectories =
@@ -73,8 +73,9 @@ namespace ConfigManager
             _configDataTable.Columns.Add("Plugin", typeof(string));
             _configDataTable.Columns.Add("File", typeof(string));
             _configDataTable.Columns.Add("Modified (Local)", typeof(DateTime));
+            _configDataTable.Columns.Add("Modified (Release)", typeof(DateTime));
+            _configDataTable.Columns.Add("Modified (Debug)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Live)", typeof(DateTime));
-            _configDataTable.Columns.Add("Modified (Build)", typeof(DateTime));
             _configDataTable.Columns.Add("Recommend Action", typeof(string));
             _configDataTable.Columns.Add("StatusID", typeof(int));
             _configDataTable.Columns.Add("Status", typeof(string));
@@ -204,33 +205,6 @@ namespace ConfigManager
             return isValid;
         }
 
-        private static bool SearchFileName(FileInfo fileInfo, string search)
-        {
-            bool result;
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(search) || search.Trim() == string.Empty)
-                {
-                    result = true;
-                }
-                else if (search.IndexOfAny(Path.GetInvalidFileNameChars()) < 0)
-                {
-                    result = Path.GetFileNameWithoutExtension(fileInfo.Name).Contains(search, StringComparison.OrdinalIgnoreCase);
-                }
-                else
-                {
-                    result = false;
-                }
-            }
-            catch
-            {
-                result = false;
-            }
-
-            return result;
-        }
-
         private void RaiseReportProgressEvent(int percentage)
         {
             ReportProgressEvent?.Invoke(this, new ProgressEventArgs(percentage));
@@ -275,6 +249,16 @@ namespace ConfigManager
             }
 
             return result;
+        }
+
+        private static object? GetValidatedDateTime(DateTime dateTime)
+        {
+            if (dateTime == DateTime.MinValue || dateTime == DateTime.MaxValue)
+            {
+                return null;
+            }
+            
+            return dateTime;
         }
 
         public int GetCount()
@@ -324,20 +308,30 @@ namespace ConfigManager
             DateTime releaseFileModified;
             DateTime debugFileModified;
 
+            ConfigDeployAction deployAction = ConfigDeployAction.Plugin;
+
             Queue<PluginConfig> pluginConfigs;
             Queue<string> plugins;
             Queue<string> configs;
 
-            ConfigStatusArgs status = null!;
+            ConfigStatusArgs? status = null;
 
             PluginConfig pluginConfig;
             string pluginFolder;
             string plugin;
             string config;
 
+            bool pluginExists;
             bool deployExists;
             bool releaseExists;
             bool debugExists;
+
+            int comparePluginDeploy;
+            int comparePluginRelease;
+            int comparePluginDebug;
+            int compareDeployRelease;
+            int compareDeployDebug;
+            int compareReleaseDebug;
 
             int totalFiles;
             int filesProcessed = 0;
@@ -396,7 +390,9 @@ namespace ConfigManager
 
                         if (pluginFileInfo is not null && pluginFileInfo.Directory is not null)
                         {
-                            if (SearchFileName(pluginFileInfo, args.Search))
+                            pluginExists = pluginFileInfo.Exists;
+
+                            if (pluginExists && pluginFileInfo.FileNameContains(args.Search))
                             {
                                 if (IsValidSubDirectory(pluginDirectory, pluginFileInfo.Directory))
                                 {
@@ -408,227 +404,194 @@ namespace ConfigManager
                                     releaseExists = releaseFileInfo.Exists;
                                     debugExists = debugFileInfo.Exists;
 
-                                    pluginFileModified = pluginFileInfo.LastWriteTime;
+                                    pluginFileModified = pluginExists ? pluginFileInfo.LastWriteTime : DateTime.MinValue;
+                                    deployFileModified = deployExists ? deployFileInfo.LastWriteTime : DateTime.MinValue;
+                                    releaseFileModified = releaseExists ? releaseFileInfo.LastWriteTime : DateTime.MinValue;
+                                    debugFileModified = debugExists ? debugFileInfo.LastWriteTime : DateTime.MinValue;
 
-                                    /* Get all 4 file infos
-                                     * Get all 4 file exists bools
-                                     * Get all 4 file modified datetimes
-                                     * Only process if at least 1 datetime is >= min datetime
-                                     * 
-                                     * Compare (Revise FilesEqual as CompareModified(file, other) extension method to return -1,0,1):
-                                     * 1. comparePluginDeploy
-                                     * 2. comparePluginRelease
-                                     * 3. comparePluginDebug
-                                     * 4. compareDeployRelease
-                                     * 5. compareDeployDebug
-                                     * 6. compareReleaseDebug
-                                     * 
-                                     * If !deployExists
-                                     *      => ConfigStatus.NotDeployed (do not override)
-                                     * 
-                                     * If neither file is > plugin, and plugin is > at least one other file
-                                     * If comparePluginDeploy >= 0 && comparePluginRelease >= 0 && comparePluginDebug >= 0
-                                     *      If comparePluginDeploy == 1 || comparePluginRelease == 1 || comparePluginDebug == 1
-                                     *          => ConfigStatus.LocalModified (do not override)
-                                     * 
-                                     * If deploy exists and neither file is > deploy, and deploy > at least one other file
-                                     * If deployExists
-                                     *      If comparePluginDeploy <= 0 && compareDeployRelease >= 0 && compareDeployDebug >= 0
-                                     *          If comparePluginDeploy == -1 || compareDeployRelease == 1 || compareDeployDebug == 1
-                                     *              => ConfigStatus.LiveModified (do not override)
-                                     * 
-                                     * If release exists and > all other files
-                                     * If releaseExists
-                                     *      If comparePluginRelease == -1 && compareDeployRelease == -1 && compareReleaseDebug == 1
-                                     *          => ConfigStatus.ReleaseModified (do not override)
-                                     * 
-                                     * If debug exists and > all other files
-                                     * If debugExists
-                                     *      If comparePluginDebug == -1 && compareDeployDebug == -1 && compareReleaseDebug == -1
-                                     *          => ConfigStatus.DebugModified (do not override)
-                                     * 
-                                     * If both release and debug exist, and release = debug, and both > plugin and deploy
-                                     * If releaseExists && debugExists
-                                     *      If compareReleaseDebug == 0 && comparePluginRelease == -1 && compareDeployRelease == -1
-                                     *          => ConfigStatus.BuildModified (do not override)
-                                     * 
-                                     * If all exist and equal
-                                     * If deployExists && releaseExists && debugExists
-                                     *      If comparePluginDeploy == 0 && comparePluginRelease == 0 && comparePluginDebug == 0
-                                     *          If compareDeployRelease == 0 && compareDeployDebug == 0 && compareReleaseDebug == 0
-                                     *              => ConfigStatus.Good (do not override)
-                                     */
-
-                                    // Check the deployed (live) file.
-                                    deployFile = Path.Combine(deployDirectory.FullName, plugin, pluginFileInfo.Name);
-
-                                    if (File.Exists(deployFile))
+                                    if (minDateTime.LessThanOrEqualToAny(
+                                        pluginFileModified, deployFileModified, releaseFileModified, debugFileModified))
                                     {
-                                        deployFileInfo = new(deployFile);
+                                        comparePluginDeploy = pluginFileInfo.CompareModified(deployFileInfo);
+                                        comparePluginRelease = pluginFileInfo.CompareModified(releaseFileInfo);
+                                        comparePluginDebug = pluginFileInfo.CompareModified(debugFileInfo);
+                                        compareDeployRelease = deployFileInfo.CompareModified(releaseFileInfo);
+                                        compareDeployDebug = deployFileInfo.CompareModified(debugFileInfo);
+                                        compareReleaseDebug = releaseFileInfo.CompareModified(debugFileInfo);
 
-                                        if (deployFileInfo is not null && deployFileInfo.Directory is not null)
+                                        if (status is null)
                                         {
-                                            deployFileModified = deployFileInfo.LastWriteTime;
-
-                                            if (status is null)
+                                            if (pluginExists)
                                             {
-                                                if (pluginFileModified != deployFileModified)
+                                                if (comparePluginDeploy >= 0 && comparePluginRelease >= 0 && comparePluginDebug >= 0)
                                                 {
-                                                    if (pluginFileModified >= minDateTime || deployFileModified >= minDateTime)
+                                                    if (comparePluginDeploy == 1 || comparePluginRelease == 1 || comparePluginDebug == 1)
                                                     {
-                                                        if (!FilesEqual(pluginFileInfo, deployFileInfo))
+                                                        // Neither copy has changes earlier than the local plugin file, 
+                                                        // but the plugin file has changes earlier than at least one other copy.
+                                                        status = _configStatusDictionary[ConfigStatus.LocalModified];
+
+                                                        // When deploying, the local plugin file will replace the other copies.
+                                                        deployAction = ConfigDeployAction.Plugin;
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (status is null)
+                                        {
+                                            if (deployExists)
+                                            {
+                                                if (comparePluginDeploy <= 0 && compareDeployRelease >= 0 && compareDeployDebug >= 0)
+                                                {
+                                                    if (comparePluginDeploy == -1 || compareDeployRelease == 1 || compareDeployDebug == 1)
+                                                    {
+                                                        // Neither local copy has changes earlier than the deployed file, 
+                                                        // but the deployed file has changes earlier than at least one other local copy.
+                                                        status = _configStatusDictionary[ConfigStatus.LiveModified];
+
+                                                        if (pluginExists && comparePluginRelease >= 0 && comparePluginDebug >= 0)
                                                         {
-                                                            // Local file has recent changes that have not been deployed yet.
-                                                            if (pluginFileModified > deployFileModified)
-                                                            {
-                                                                status = _configStatusDictionary[ConfigStatus.LocalModified];
-                                                            }
-                                                            // Deployed file has recent changes that should be grabbed.
-                                                            else if (deployFileModified > pluginFileModified)
-                                                            {
-                                                                status = _configStatusDictionary[ConfigStatus.LiveModified];
-                                                            }
+                                                            // When deploying, the local plugin file will replace the other copies.
+                                                            deployAction = ConfigDeployAction.Plugin;
+                                                        }
+                                                        else if (releaseExists && comparePluginRelease <= 0 && compareReleaseDebug >= 0)
+                                                        {
+                                                            // When deploying, the release file will replace the other copies.
+                                                            deployAction = ConfigDeployAction.Release;
+                                                        }
+                                                        else if (debugExists && comparePluginDebug <= 0 && compareReleaseDebug <= 0)
+                                                        {
+                                                            // When deploying, the debug file will replace the other copies.
+                                                            deployAction = ConfigDeployAction.Debug;
+                                                        }
+                                                        else
+                                                        {
+                                                            // When deploying, the local plugin file will replace the other copies.
+                                                            deployAction = ConfigDeployAction.Plugin;
                                                         }
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-                                    else if (status is null)
-                                    {
-                                        // File has not been deployed yet.
-                                        if (pluginFileModified >= minDateTime)
+
+                                        if (status is null)
                                         {
-                                            status = _configStatusDictionary[ConfigStatus.NotDeployed];
-                                        }
-                                    }
-
-#warning "Code duplication"
-                                    // If the deployed file exists and has no differences, check the config in the release output directory.
-                                    releaseFile = Path.Combine(releaseDirectory.FullName, plugin, pluginFileInfo.Name);
-
-                                    if (File.Exists(releaseFile))
-                                    {
-                                        releaseFileInfo = new(releaseFile);
-
-                                        if (releaseFileInfo is not null && releaseFileInfo.Directory is not null)
-                                        {
-                                            releaseFileModified = releaseFileInfo.LastWriteTime;
-
-                                            if (status is null)
+                                            if (releaseExists)
                                             {
-                                                if (pluginFileModified != releaseFileModified)
+                                                if (comparePluginRelease == -1 && compareDeployRelease == -1 && compareReleaseDebug == 1)
                                                 {
-                                                    if (pluginFileModified >= minDateTime || releaseFileModified >= minDateTime)
+                                                    // The release file has changes earlier than all other copies.
+                                                    status = _configStatusDictionary[ConfigStatus.ReleaseModified];
+
+                                                    // When deploying, the release file will replace the other copies.
+                                                    deployAction = ConfigDeployAction.Release;
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (status is null)
+                                        {
+                                            if (debugExists)
+                                            {
+                                                if (comparePluginDebug == -1 && compareDeployDebug == -1 && compareReleaseDebug == -1)
+                                                {
+                                                    // The debug file has changes earlier than all other copies.
+                                                    status = _configStatusDictionary[ConfigStatus.DebugModified];
+
+                                                    // When deploying, the debug file will replace the other copies.
+                                                    deployAction = ConfigDeployAction.Debug;
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (status is null)
+                                        {
+                                            if (releaseExists && debugExists)
+                                            {
+                                                if (compareReleaseDebug == 0 && comparePluginRelease == -1 && compareDeployRelease == -1)
+                                                {
+                                                    // Both the release and debug files are equal and have changes earlier
+                                                    // than the local plugin copy and the deployed copy.
+                                                    status = _configStatusDictionary[ConfigStatus.BuildModified];
+
+                                                    // When deploying, the release file will replace the other copies.
+                                                    deployAction = ConfigDeployAction.Release;
+                                                }
+                                            }
+                                        }
+
+                                        if (status is null)
+                                        {
+                                            if (!deployExists)
+                                            {
+                                                if (pluginExists && releaseExists && debugExists)
+                                                {
+                                                    if (comparePluginRelease == 0 && comparePluginDebug == 0 && compareReleaseDebug == 0)
                                                     {
-                                                        if (!FilesEqual(pluginFileInfo, releaseFileInfo))
-                                                        {
-                                                            // Local file has recent changes that have not been deployed to the release directory.
-                                                            if (pluginFileModified > releaseFileModified)
-                                                            {
-                                                                status = _configStatusDictionary[ConfigStatus.LocalBuildModified];
-                                                            }
-                                                            // Release file has recent changes that should be deployed as the latest local version.
-                                                            else if (releaseFileModified > pluginFileModified)
-                                                            {
-                                                                /* This should overwrite the status */
-                                                                status = _configStatusDictionary[ConfigStatus.BuildModified];
-                                                            }
-                                                        }
+                                                        // All local copies exist and are equal, but neither local copy has been deployed
+                                                        // to the live directory yet.
+                                                        status = _configStatusDictionary[ConfigStatus.NotDeployed];
+
+                                                        // When deploying, the local plugin file will replace the other copies.
+                                                        deployAction = ConfigDeployAction.Plugin;
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-                                    else if (status is null)
-                                    {
-                                        // File has not been deployed to the release directory yet.
-                                        if (pluginFileModified >= minDateTime)
+                                        
+                                        if (status is null)
                                         {
-                                            status = _configStatusDictionary[ConfigStatus.BuildNotDeployed];
-                                        }
-                                    }
-
-#warning "Code duplication"
-                                    // If the release file exists and has no differences, check the config in the debug output directory.
-                                    debugFile = Path.Combine(debugDirectory.FullName, plugin, pluginFileInfo.Name);
-
-                                    if (File.Exists(releaseFile))
-                                    {
-                                        debugFileInfo = new(releaseFile);
-
-                                        if (debugFileInfo is not null && debugFileInfo.Directory is not null)
-                                        {
-                                            debugFileModified = debugFileInfo.LastWriteTime;
-
-                                            if (status is null)
+                                            if (pluginExists && releaseExists && debugExists && deployExists)
                                             {
-                                                if (pluginFileModified != debugFileModified)
+                                                if (comparePluginDeploy == 0 && comparePluginRelease == 0 && comparePluginDebug == 0)
                                                 {
-                                                    if (pluginFileModified >= minDateTime || debugFileModified >= minDateTime)
+                                                    if (compareDeployRelease == 0 && compareDeployDebug == 0 && compareReleaseDebug == 0)
                                                     {
-                                                        if (!FilesEqual(pluginFileInfo, debugFileInfo))
-                                                        {
-                                                            // Local file has recent changes that have not been deployed to the debug directory.
-                                                            if (pluginFileModified > debugFileModified)
-                                                            {
-                                                                status = _configStatusDictionary[ConfigStatus.LocalBuildModified];
-                                                            }
-                                                            // Debug file has recent changes that should be deployed as the latest local version.
-                                                            else if (debugFileModified > pluginFileModified)
-                                                            {
-                                                                /* This should overwrite the status */
-                                                                status = _configStatusDictionary[ConfigStatus.BuildModified];
-                                                            }
-                                                        }
+                                                        // All copies of the file exist and are equal.
+                                                        status = _configStatusDictionary[ConfigStatus.Good];
+
+                                                        // When deploying, the local plugin file will replace the other copies.
+                                                        deployAction = ConfigDeployAction.Plugin;
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-                                    else if (status is null)
-                                    {
-                                        // File has not been deployed to the debug directory yet.
-                                        if (pluginFileModified >= minDateTime)
-                                        {
-                                            status = _configStatusDictionary[ConfigStatus.BuildNotDeployed];
-                                        }
-                                    }
 
-#warning "Code duplication"
-                                    if (status is null)
-                                    {
-                                        /* Verify all datetimes are the same and >= min datetime */
-
-                                        // The file is up to date in all paths.
-                                        if (pluginFileModified >= minDateTime)
+                                        if (status is not null)
                                         {
-                                            status = _configStatusDictionary[ConfigStatus.Good];
+                                            _configDataTable.Rows.Add(
+                                                id,
+                                                plugin,
+                                                pluginFileInfo.Name,
+                                                GetValidatedDateTime(pluginFileModified),
+                                                GetValidatedDateTime(releaseFileModified),
+                                                GetValidatedDateTime(debugFileModified),
+                                                GetValidatedDateTime(deployFileModified),
+                                                status.Action,
+                                                status.Id,
+                                                status.Status);
+
+                                            _configFileDictionary.Add(
+                                                id, new(deployAction, pluginFileInfo, releaseFileInfo, debugFileInfo, deployFileInfo));
+
+                                            id++;
+
+                                            status = null;
                                         }
+
+                                        filesProcessed++;
+
+                                        // Calculate progress percentage.
+                                        progress = ((filesProcessed + 1.0) / totalFiles) * 100.0;
+
+                                        // Report progress.
+                                        RaiseReportProgressEvent((int)progress);
                                     }
                                 }
                             }
                         }
                     }
-
-                    if (status is not null)
-                    {
-                        _configDataTable.Rows.Add(
-                            id, plugin, pluginFileInfo.Name, pluginFileModified, deployFileModified, null, status.Action, status.Id, status.Status);
-
-                        _configFileDictionary.Add(id, new(plugin, pluginFileInfo, deployFileInfo));
-                    }
-
-                    /* reset file values to null */
-
-                    id++;
-                    filesProcessed++;
-
-                    // Calculate progress percentage.
-                    progress = ((filesProcessed + 1.0) / totalFiles) * 100.0;
-
-                    // Report progress.
-                    RaiseReportProgressEvent((int)progress);
                 }
 
                 if (_cancelled)
@@ -657,39 +620,33 @@ namespace ConfigManager
             }
         }
 
-        // Copy and overwrite config files from the local plugin path to the live, release, and debug paths.
+        // Copy and overwrite config files with the latest local versions to all other necessary directories.
         public bool Deploy(int[] configIds)
         {
             bool success = true;
             FileInfo localFile;
-            FileInfo copyFile;
-            string plugin;
-
-            string[] copyPaths;
 
             try
             {
-                copyPaths = new string[] { _deployPath, _releasePath, _debugPath };
-
                 foreach (int id in configIds)
                 {
                     if (_configFileDictionary.ContainsKey(id))
                     {
-                        localFile = _configFileDictionary[id].LocalFile;
+                        // Get the latest local file to deploy.
+                        localFile = _configFileDictionary[id].GetDeployingFile();
 
                         if (localFile is not null && localFile.Exists)
                         {
-                            // Get the plugin name for this config file.
-                            plugin = _configFileDictionary[id].Plugin;
-
-                            if (!string.IsNullOrWhiteSpace(plugin))
+                            foreach (FileInfo copyFile in _configFileDictionary[id].GetReplacingFiles())
                             {
-                                foreach (string copyPath in copyPaths)
+                                // We don't need to check whether the actual file to be replaced exists.
+                                if (copyFile is not null && copyFile.Directory is not null && copyFile.Directory.Exists)
                                 {
-                                    copyFile = new(Path.Combine(copyPath, plugin, localFile.Name));
-
-                                    if (copyFile.Directory is not null && copyFile.Directory.Exists)
+                                    // Do not attempt to copy the file to the same path.
+                                    if (localFile.FullName != copyFile.FullName)
                                     {
+                                        /* Consider File.Replace to store backups. */
+
                                         // Overwrite the existing config file, if it exists.
                                         File.Copy(localFile.FullName, copyFile.FullName, overwrite: true);
                                         copyFile.Refresh();
@@ -723,21 +680,14 @@ namespace ConfigManager
             return success;
         }
 
-        // Copy and overwrite config files from their deployed paths to the local plugin, release, and debug paths.
+        // Copy and overwrite config files from the deployed (live) directory to the local plugin, release, and debug directories.
         public bool Grab(int[] configIds)
         {
             bool success = true;
             FileInfo deployFile;
-            FileInfo localFile;
-            FileInfo copyFile;
-            string plugin;
-
-            string[] copyPaths;
 
             try
             {
-                copyPaths = new string[] { _releasePath, _debugPath };
-
                 foreach (int id in configIds)
                 {
                     if (_configFileDictionary.ContainsKey(id))
@@ -746,44 +696,27 @@ namespace ConfigManager
                         if (_configFileDictionary[id].IsDeployed())
                         {
                             deployFile = _configFileDictionary[id].DeployFile;
-                            localFile = _configFileDictionary[id].LocalFile;
 
-                            if (deployFile is not null && deployFile.Exists && localFile is not null && localFile.Exists)
+                            if (deployFile is not null && deployFile.Exists)
                             {
-                                // When copying over to the local plugin path, use the saved path in the dictionary.
-                                // Overwrite the existing local config file.
-                                File.Copy(deployFile.FullName, localFile.FullName, overwrite: true);
-                                localFile.Refresh();
-
-                                if (localFile.LastWriteTime != deployFile.LastWriteTime)
+                                foreach (FileInfo localFile in _configFileDictionary[id].GetLocalFiles())
                                 {
-                                    localFile.LastWriteTime = deployFile.LastWriteTime;
-                                    localFile.Refresh();
-                                }
-
-                                // Get the plugin name for this config file.
-                                plugin = _configFileDictionary[id].Plugin;
-
-                                if (!string.IsNullOrWhiteSpace(plugin))
-                                {
-                                    foreach (string copyPath in copyPaths)
+                                    // We don't need to check whether the actual local file exists.
+                                    if (localFile is not null && localFile.Directory is not null && localFile.Directory.Exists)
                                     {
-                                        copyFile = new(Path.Combine(copyPath, plugin, deployFile.Name));
-
-                                        if (copyFile.Directory is not null && copyFile.Directory.Exists)
+                                        // Do not attempt to copy the file to the same path.
+                                        if (deployFile.FullName != localFile.FullName)
                                         {
-                                            // Do not attempt to copy the file to the same path.
-                                            if (deployFile.FullName != copyFile.FullName)
-                                            {
-                                                // Overwrite the existing config file, if it exists.
-                                                File.Copy(deployFile.FullName, copyFile.FullName, overwrite: true);
-                                                copyFile.Refresh();
+                                            /* Consider File.Replace to store backups. */
 
-                                                if (copyFile.LastWriteTime != deployFile.LastWriteTime)
-                                                {
-                                                    copyFile.LastWriteTime = deployFile.LastWriteTime;
-                                                    copyFile.Refresh();
-                                                }
+                                            // Overwrite the existing config file, if it exists.
+                                            File.Copy(deployFile.FullName, localFile.FullName, overwrite: true);
+                                            localFile.Refresh();
+
+                                            if (localFile.LastWriteTime != deployFile.LastWriteTime)
+                                            {
+                                                localFile.LastWriteTime = deployFile.LastWriteTime;
+                                                localFile.Refresh();
                                             }
                                         }
                                     }

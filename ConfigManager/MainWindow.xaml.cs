@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ConfigManager
 {
@@ -22,6 +24,7 @@ namespace ConfigManager
         private readonly ConfigService _configService;
         private readonly BackgroundWorker _configWorker;
         private int _selectedGoodRecords;
+        private ConfigEditorArgs? _configEditor;
         
         #endregion
 
@@ -250,6 +253,36 @@ namespace ConfigManager
             catch { }
         }
 
+        private void ShowIndeterminateProgress()
+        {
+            if (mainGrid.IsVisible)
+            {
+                configWorkProgressBar.IsIndeterminate = true;
+                configWorkProgressBar.Visibility = Visibility.Visible;
+                configSearchProgressBar.Visibility = Visibility.Hidden;
+            }
+            else if (editorGrid.IsVisible)
+            {
+                editorProgressBar.IsIndeterminate = true;
+                editorProgressBar.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void HideIndeterminateProgress()
+        {
+            if (mainGrid.IsVisible)
+            {
+                configWorkProgressBar.IsIndeterminate = false;
+                configWorkProgressBar.Visibility = Visibility.Hidden;
+                configSearchProgressBar.Visibility = Visibility.Visible;
+            }
+            else if (editorGrid.IsVisible)
+            {
+                editorProgressBar.IsIndeterminate = false;
+                editorProgressBar.Visibility = Visibility.Hidden;
+            }
+        }
+
         private static int GetGoodRecordCount(IList items)
         {
             int count = 0;
@@ -277,6 +310,30 @@ namespace ConfigManager
             { }
 
             return count;
+        }
+
+        private int GetSelectedId()
+        {
+            object item;
+            int configId = -1;
+            DataRowView? row;
+
+            try
+            {
+                item = configDataGrid.SelectedItem;
+                row = item as DataRowView;
+
+                if (row is not null && row["Id"] is int id)
+                {
+                    configId = id;
+                }
+            }
+            catch
+            {
+                configId = -1;
+            }
+
+            return configId;
         }
 
         private int[] GetSelectedIds()
@@ -314,7 +371,7 @@ namespace ConfigManager
             return result;
         }
 
-        private void Grab_Click(object sender, RoutedEventArgs e)
+        private async void Grab_Click(object sender, RoutedEventArgs e)
         {
             int[] ids = GetSelectedIds();
 
@@ -329,7 +386,11 @@ namespace ConfigManager
                     grabButton.IsEnabled = false;
                     deployButton.IsEnabled = false;
 
-                    _configService.Grab(ids);
+                    ShowIndeterminateProgress();
+
+                    _ = await Task.Run(() => _configService.Grab(ids));
+
+                    HideIndeterminateProgress();
 
                     // Re-render the DataGrid.
                     RenderData();
@@ -341,7 +402,7 @@ namespace ConfigManager
             }
         }
 
-        private void Deploy_Click(object sender, RoutedEventArgs e)
+        private async void Deploy_Click(object sender, RoutedEventArgs e)
         {
             int[] ids = GetSelectedIds();
 
@@ -356,7 +417,11 @@ namespace ConfigManager
                     grabButton.IsEnabled = false;
                     deployButton.IsEnabled = false;
 
-                    _configService.Deploy(ids);
+                    ShowIndeterminateProgress();
+
+                    _ = await Task.Run(() => _configService.Deploy(ids));
+
+                    HideIndeterminateProgress();
 
                     // Re-render the DataGrid.
                     RenderData();
@@ -370,24 +435,144 @@ namespace ConfigManager
 
         private void DataGridRow_PreviewMouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            // Ensure only one item is selected when right-clicking a row in the datagrid.
             if (sender is not null && sender is DataGridRow row)
             {
                 if (configDataGrid.SelectedItems is not null && configDataGrid.SelectedItems.Count > 1)
                 {
                     configDataGrid.UnselectAll();
                     row.IsSelected = true;
+                    e.Handled = true;
                 }
             }
         }
 
-        private void EditorSubmit_Click(object sender, RoutedEventArgs e)
+        private void ShowEditor()
         {
+            mainGrid.IsEnabled = false;
+            mainGrid.Visibility = Visibility.Hidden;
 
+            editorGrid.IsEnabled = true;
+            editorGrid.Visibility = Visibility.Visible;
+        }
+
+        private void HideEditor()
+        {
+            editorPathTextBox.Clear();
+            editorTextBox.Clear();
+
+            editorGrid.IsEnabled = false;
+            editorGrid.Visibility = Visibility.Hidden;
+
+            mainGrid.IsEnabled = true;
+            mainGrid.Visibility = Visibility.Visible;
+        }
+
+        private void Edit_Click(object sender, RoutedEventArgs e)
+        {
+            // There should be a single row selected.
+            if (configDataGrid.SelectedItem is null)
+            {
+                return;
+            }
+
+            int id = GetSelectedId();
+
+            if (id != -1)
+            {
+                _configEditor = _configService.GetConfigEditor(id);
+
+                if (_configEditor is not null)
+                {
+                    ShowEditor();
+
+                    editorPathTextBox.Text = _configEditor.Path;
+                    editorTextBox.Text = _configEditor.Content;
+
+                    editorTextBox.Focus();
+                }
+            }
+        }
+
+        private async void EditorSubmit_Click(object sender, RoutedEventArgs e)
+        {
+            if (_configEditor is null)
+            {
+                return;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                    $"Deploying this config file will overwite the local and live copies.\n\nDo you wish to proceed?\n\n", "Warning",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                editorTextBox.IsEnabled = false;
+                editorCancelButton.IsEnabled = false;
+                editorSubmitButton.IsEnabled = false;
+
+                ShowIndeterminateProgress();
+
+                _configEditor.Overwrite(editorTextBox.Text);
+
+                bool success = await Task.Run(() => _configService.Deploy(_configEditor));
+
+                HideIndeterminateProgress();
+
+                editorTextBox.IsEnabled = true;
+                editorCancelButton.IsEnabled = true;
+                editorSubmitButton.IsEnabled = true;
+
+                if (success)
+                {
+                    HideEditor();
+                    RenderData();
+                }
+            }
         }
 
         private void EditorCancel_Click(object sender, RoutedEventArgs e)
         {
+            HideEditor();
+        }
 
+        private void EditorTextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (Keyboard.Modifiers != ModifierKeys.Control)
+            {
+                return;
+            }
+
+            double fontSize = editorTextBox.FontSize;
+
+            fontSize += e.Delta > 0 ? 1 : -1;
+
+            editorTextBox.FontSize = double.Clamp(fontSize, 10, 48);
+
+            e.Handled = true;
+        }
+
+        private void WrapText_Checked(object sender, RoutedEventArgs e)
+        {
+            editorTextBox.TextWrapping = TextWrapping.Wrap;
+        }
+
+        private void WrapText_Unhecked(object sender, RoutedEventArgs e)
+        {
+            editorTextBox.TextWrapping = TextWrapping.NoWrap;
+        }
+
+        private void SpellCheck_Checked(object sender, RoutedEventArgs e)
+        {
+            editorTextBox.SpellCheck.IsEnabled = true;
+        }
+
+        private void SpellCheck_Unchecked(object sender, RoutedEventArgs e)
+        {
+            editorTextBox.SpellCheck.IsEnabled = false;
+
+            // Force clear the underlines remnants.
+            editorTextBox.TextDecorations.Clear();
         }
     }
 }

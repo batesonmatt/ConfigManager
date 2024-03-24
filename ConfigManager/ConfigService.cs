@@ -421,6 +421,25 @@ namespace ConfigManager
 
                                         if (status is null)
                                         {
+                                            if (!deployExists)
+                                            {
+                                                if (pluginExists && releaseExists && debugExists)
+                                                {
+                                                    if (comparePluginRelease == 0 && comparePluginDebug == 0 && compareReleaseDebug == 0)
+                                                    {
+                                                        // All local copies exist and are equal, but neither local copy has been deployed
+                                                        // to the live directory yet.
+                                                        status = _configStatusDictionary[ConfigStatus.NotDeployed];
+
+                                                        // When deploying, the local plugin file will replace the other copies.
+                                                        deployAction = ConfigDeployAction.Plugin;
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (status is null)
+                                        {
                                             if (pluginExists)
                                             {
                                                 if (comparePluginDeploy >= 0 && comparePluginRelease >= 0 && comparePluginDebug >= 0)
@@ -520,25 +539,6 @@ namespace ConfigManager
                                                 }
                                             }
                                         }
-
-                                        if (status is null)
-                                        {
-                                            if (!deployExists)
-                                            {
-                                                if (pluginExists && releaseExists && debugExists)
-                                                {
-                                                    if (comparePluginRelease == 0 && comparePluginDebug == 0 && compareReleaseDebug == 0)
-                                                    {
-                                                        // All local copies exist and are equal, but neither local copy has been deployed
-                                                        // to the live directory yet.
-                                                        status = _configStatusDictionary[ConfigStatus.NotDeployed];
-
-                                                        // When deploying, the local plugin file will replace the other copies.
-                                                        deployAction = ConfigDeployAction.Plugin;
-                                                    }
-                                                }
-                                            }
-                                        }
                                         
                                         if (status is null)
                                         {
@@ -579,19 +579,19 @@ namespace ConfigManager
 
                                             status = null;
                                         }
-
-                                        filesProcessed++;
-
-                                        // Calculate progress percentage.
-                                        progress = ((filesProcessed + 1.0) / totalFiles) * 100.0;
-
-                                        // Report progress.
-                                        RaiseReportProgressEvent((int)progress);
                                     }
                                 }
                             }
                         }
                     }
+
+                    filesProcessed++;
+
+                    // Calculate progress percentage.
+                    progress = ((filesProcessed + 1.0) / totalFiles) * 100.0;
+
+                    // Report progress.
+                    RaiseReportProgressEvent((int)progress);
                 }
 
                 if (_cancelled)

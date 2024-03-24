@@ -6,8 +6,8 @@
         LocalModified,
         LiveModified,
         NotDeployed,
-        LocalBuildModified,
-        BuildModified,
-        BuildNotDeployed
+        ReleaseModified,
+        DebugModified,
+        BuildModified
     }
 }

@@ -637,6 +637,9 @@ namespace ConfigManager
 
                         if (localFile is not null && localFile.Exists)
                         {
+                            // Load any changes made to the file.
+                            localFile.Refresh();
+
                             foreach (FileInfo copyFile in _configFileDictionary[id].GetReplacingFiles())
                             {
                                 // We don't need to check whether the actual file to be replaced exists.
@@ -680,6 +683,49 @@ namespace ConfigManager
             return success;
         }
 
+        // Save the edited config file and deploy the changes to all other necessary directories.
+        public bool Deploy(ConfigEditorArgs configEditor)
+        {
+            bool success = true;
+            FileInfo file;
+            int id;
+
+            try
+            {
+                id = configEditor.Id;
+
+                if (_configFileDictionary.ContainsKey(id))
+                {
+                    file = new(configEditor.Path);
+
+                    if (file is not null && file.Directory is not null && file.Directory.Exists)
+                    {
+                        // Save the file.
+                        File.WriteAllText(file.FullName, configEditor.Content);
+                        file.Refresh();
+
+                        // Deploy changes.
+                        success = Deploy(new int[] { id });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                success = false;
+
+                string message = $"Could not save or deploy the config file.\n\nDetails:\n\n{ex.Message}";
+
+                if (ex.StackTrace is not null)
+                {
+                    message += $"\n\n{ex.StackTrace}";
+                }
+
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return success;
+        }
+
         // Copy and overwrite config files from the deployed (live) directory to the local plugin, release, and debug directories.
         public bool Grab(int[] configIds)
         {
@@ -699,6 +745,9 @@ namespace ConfigManager
 
                             if (deployFile is not null && deployFile.Exists)
                             {
+                                // Load any changes made to the file.
+                                deployFile.Refresh();
+
                                 foreach (FileInfo localFile in _configFileDictionary[id].GetLocalFiles())
                                 {
                                     // We don't need to check whether the actual local file exists.
@@ -741,6 +790,50 @@ namespace ConfigManager
             }
 
             return success;
+        }
+
+        public ConfigEditorArgs? GetConfigEditor(int configId)
+        {
+            string path;
+            string content;
+            ConfigEditorArgs? editor = null;
+            FileInfo file;
+
+            try
+            {
+                if (_configFileDictionary.ContainsKey(configId))
+                {
+                    file = _configFileDictionary[configId].GetDeployingFile();
+
+                    if (file is not null)
+                    {
+                        // Load any changes made to the file.
+                        file.Refresh();
+
+                        if (file.Exists)
+                        {
+                            path = file.FullName;
+                            content = File.ReadAllText(path);
+                            editor = new(configId, path, content);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                editor = null;
+
+                string message = $"Could not retrieve file.\n\nDetails:\n\n{ex.Message}";
+
+                if (ex.StackTrace is not null)
+                {
+                    message += $"\n\n{ex.StackTrace}";
+                }
+
+                MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return editor;
         }
 
         #endregion

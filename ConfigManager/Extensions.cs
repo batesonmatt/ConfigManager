@@ -9,6 +9,19 @@ namespace ConfigManager
 
         public static int CompareModified(this FileInfo file, FileInfo other)
         {
+            switch (file)
+            {
+                case null when other is null:
+                    return 0;
+                case not null when other is null:
+                    return 1;
+                case null when other is not null:
+                    return -1;
+                default:
+                    break;
+            }
+
+            // Shouldn't be null here.
             _ = file ?? throw new ArgumentNullException(nameof(file));
             _ = other ?? throw new ArgumentNullException(nameof(other));
 
@@ -86,6 +99,51 @@ namespace ConfigManager
             }
 
             return (fileModified > otherModified) ? 1 : -1;
+        }
+
+        public static bool LessThanOrEqualToAny(this DateTime dateTime, params DateTime[] dateTimes)
+        {
+            _ = dateTimes ?? throw new ArgumentNullException(nameof(dateTimes));
+
+            bool result = false;
+            int i = 0;
+
+            while (!result && i < dateTimes.Length)
+            {
+                result = dateTimes[i] >= dateTime;
+                i++;
+            }
+
+            return result;
+        }
+
+        public static bool FileNameContains(this FileInfo fileInfo, string searchText)
+        {
+            _ = fileInfo ?? throw new ArgumentNullException(nameof(fileInfo));
+
+            bool result;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(searchText) || searchText.Trim() == string.Empty)
+                {
+                    result = true;
+                }
+                else if (searchText.IndexOfAny(Path.GetInvalidFileNameChars()) < 0)
+                {
+                    result = Path.GetFileNameWithoutExtension(fileInfo.Name).Contains(searchText, StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+            catch
+            {
+                result = false;
+            }
+
+            return result;
         }
     }
 }

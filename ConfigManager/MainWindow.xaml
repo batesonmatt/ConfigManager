@@ -192,8 +192,11 @@
 
             <TextBox x:Name="pathTextBox" Grid.Row="0" Grid.Column="0" Margin="10,10,5,10" IsReadOnly="True" TextWrapping="NoWrap"/>
 
-            <Button x:Name="editorSubmitButton" Content="Save and Deploy" Grid.Row="0" Grid.Column="1" Margin="5,10,5,10" Height="30" Padding="10,0,10,0"/>
-            <Button x:Name="editorCancelButton" Content="Cancel" Grid.Row="0" Grid.Column="2" Margin="5,10,10,10" Height="30" Width="80"/>
+            <Button x:Name="editorSubmitButton" Content="Save and Deploy" Grid.Row="0" Grid.Column="1" Margin="5,10,5,10" Height="30" Padding="10,0,10,0"
+                    Click="EditorSubmit_Click"/>
+            
+            <Button x:Name="editorCancelButton" Content="Cancel" Grid.Row="0" Grid.Column="2" Margin="5,10,10,10" Height="30" Width="80"
+                    Click="EditorCancel_Click"/>
 
             <TextBox x:Name="editorTextBox" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10" TextWrapping="Wrap" 
                      TextAlignment="Left" FontFamily="Cascadia Mono" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" 

@@ -107,7 +107,7 @@ namespace ConfigManager
             _configWorker.CancelAsync();
 
             // Reset so we don't have a partially filled ProgressBar
-            configProgressBar.Value = 0;
+            configSearchProgressBar.Value = 0;
 
             CancelProcessEvent?.Invoke(this, new CancellationEventArgs(cancelled: true));
         }
@@ -190,13 +190,13 @@ namespace ConfigManager
             // Update progress bar if percentage changed.
             if (e.ProgressPercentage > 0)
             {
-                if (e.ProgressPercentage <= configProgressBar.Maximum)
+                if (e.ProgressPercentage <= configSearchProgressBar.Maximum)
                 {
-                    configProgressBar.Value = e.ProgressPercentage;
+                    configSearchProgressBar.Value = e.ProgressPercentage;
                 }
                 else
                 {
-                    configProgressBar.Value = configProgressBar.Maximum;
+                    configSearchProgressBar.Value = configSearchProgressBar.Maximum;
                 }
             }
         }
@@ -240,7 +240,7 @@ namespace ConfigManager
         {
             try
             {
-                configProgressBar.Value = 0;
+                configSearchProgressBar.Value = 0;
                 countLabel.Content = string.Empty;
                 selectedLabel.Content = string.Empty;
                 errorLabel.Content = string.Empty;
@@ -250,7 +250,7 @@ namespace ConfigManager
             catch { }
         }
 
-        private int GetGoodRecordCount(IList items)
+        private static int GetGoodRecordCount(IList items)
         {
             int count = 0;
             DataRowView? row;
@@ -378,6 +378,16 @@ namespace ConfigManager
                     row.IsSelected = true;
                 }
             }
+        }
+
+        private void EditorSubmit_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void EditorCancel_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

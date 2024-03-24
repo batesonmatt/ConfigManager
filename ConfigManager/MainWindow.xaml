@@ -23,163 +23,171 @@
     </Window.BorderBrush>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <Label x:Name="hostLabel" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Padding="10,10,10,10" Margin="0,0,0,10" Height="40"
-               HorizontalAlignment="Stretch" VerticalContentAlignment="Center" FontStyle="Italic" FontWeight="Medium" 
-               HorizontalContentAlignment="Right" BorderThickness="0,0,0,2">
-            <Label.Effect>
-                <DropShadowEffect Direction="270" Opacity="0.35" ShadowDepth="3" BlurRadius="8" />
-            </Label.Effect>
-            <Label.BorderBrush>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
-            </Label.BorderBrush>
-            <Label.Background>
-                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                    <GradientStop Color="White"/>
-                    <GradientStop Color="{DynamicResource {x:Static SystemColors.ControlLightColorKey}}" Offset="0.3"/>
-                </LinearGradientBrush>
-            </Label.Background>
-        </Label>
-
-        <Label x:Name="searchLabel" Content="Search by Name" Grid.Row="1" Grid.Column="0" Margin="10,0,5,0" HorizontalAlignment="Left"/>
-        <TextBox x:Name="searchBox" Grid.Row="2" Grid.Column="0" Margin="10,0,5,10" HorizontalAlignment="Stretch" 
-                 VerticalContentAlignment="Center" Height="25" TextAlignment="Left" MaxLength="50" TextWrapping="NoWrap" />
-
-        <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="1" Grid.Column="1" Margin="5,0,5,0" HorizontalAlignment="Left"/>
-        <ComboBox x:Name="pluginComboBox" Grid.Row="2" Grid.Column="1" Margin="5,0,5,10" HorizontalAlignment="Stretch" Height="25">
-            <ComboBoxItem Content="All" IsSelected="True" />
-            <ComboBoxItem Content="Adjuster" />
-            <ComboBoxItem Content="AuditArchive" />
-            <ComboBoxItem Content="AutoDialer2.0" />
-            <ComboBoxItem Content="BasicDBMaint" />
-            <ComboBoxItem Content="DBI_DailyActivityReport" />
-            <ComboBoxItem Content="EDI_Archive" />
-            <ComboBoxItem Content="Notes" />
-            <ComboBoxItem Content="ProfitPal" />
-            <ComboBoxItem Content="Reporter" />
-            <ComboBoxItem Content="Uploader" />
-        </ComboBox>
-
-        <Label x:Name="dateLabel" Content="Date Range" Grid.Row="1" Grid.Column="2" Margin="5,0,10,0" HorizontalAlignment="Left"/>
-        <ComboBox x:Name="dateComboBox" Grid.Row="2" Grid.Column="2" Margin="5,0,10,10" HorizontalAlignment="Stretch" Height="25">
-            <ComboBoxItem Content="All Time" IsSelected="True" />
-            <ComboBoxItem Content="Today" />
-            <ComboBoxItem Content="Past Week" />
-            <ComboBoxItem Content="Past Month" />
-            <ComboBoxItem Content="Past Year" />
-        </ComboBox>
-
-        <Grid Grid.Row="3" Grid.Column="2" HorizontalAlignment="Right">
+        <Grid x:Name="mainGrid">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <Button x:Name="submitButton" Content="Go" Grid.Column="0" Margin="10,10,5,10" Width="80" Height="30" Click="SubmitButton_Click"/>
-            <Button x:Name="cancelButton" Content="Cancel" IsEnabled="False" Grid.Column="1" Margin="5,10,10,10" Width="80" Height="30" Click="CancelButton_Click"/>
+            <Label x:Name="hostLabel" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Padding="10,10,10,10" Margin="0,0,0,10" Height="40"
+                    HorizontalAlignment="Stretch" VerticalContentAlignment="Center" FontStyle="Italic" FontWeight="Medium" 
+                    HorizontalContentAlignment="Right" BorderThickness="0,0,0,2">
+                <Label.Effect>
+                    <DropShadowEffect Direction="270" Opacity="0.35" ShadowDepth="3" BlurRadius="8" />
+                </Label.Effect>
+                <Label.BorderBrush>
+                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
+                </Label.BorderBrush>
+                <Label.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="White"/>
+                        <GradientStop Color="{DynamicResource {x:Static SystemColors.ControlLightColorKey}}" Offset="0.3"/>
+                    </LinearGradientBrush>
+                </Label.Background>
+            </Label>
+
+            <Label x:Name="searchLabel" Content="Search by Name" Grid.Row="1" Grid.Column="0" Margin="10,0,5,0" HorizontalAlignment="Left"/>
+            <TextBox x:Name="searchBox" Grid.Row="2" Grid.Column="0" Margin="10,0,5,10" HorizontalAlignment="Stretch" 
+                VerticalContentAlignment="Center" Height="25" TextAlignment="Left" MaxLength="50" TextWrapping="NoWrap" />
+
+            <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="1" Grid.Column="1" Margin="5,0,5,0" HorizontalAlignment="Left"/>
+            <ComboBox x:Name="pluginComboBox" Grid.Row="2" Grid.Column="1" Margin="5,0,5,10" HorizontalAlignment="Stretch" Height="25">
+                <ComboBoxItem Content="All" IsSelected="True" />
+                <ComboBoxItem Content="Adjuster" />
+                <ComboBoxItem Content="AuditArchive" />
+                <ComboBoxItem Content="AutoDialer2.0" />
+                <ComboBoxItem Content="BasicDBMaint" />
+                <ComboBoxItem Content="DBI_DailyActivityReport" />
+                <ComboBoxItem Content="EDI_Archive" />
+                <ComboBoxItem Content="Notes" />
+                <ComboBoxItem Content="ProfitPal" />
+                <ComboBoxItem Content="Reporter" />
+                <ComboBoxItem Content="Uploader" />
+            </ComboBox>
+
+            <Label x:Name="dateLabel" Content="Date Range" Grid.Row="1" Grid.Column="2" Margin="5,0,10,0" HorizontalAlignment="Left"/>
+            <ComboBox x:Name="dateComboBox" Grid.Row="2" Grid.Column="2" Margin="5,0,10,10" HorizontalAlignment="Stretch" Height="25">
+                <ComboBoxItem Content="All Time" IsSelected="True" />
+                <ComboBoxItem Content="Today" />
+                <ComboBoxItem Content="Past Week" />
+                <ComboBoxItem Content="Past Month" />
+                <ComboBoxItem Content="Past Year" />
+            </ComboBox>
+
+            <Grid Grid.Row="3" Grid.Column="2" HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="submitButton" Content="Go" Grid.Column="0" Margin="10,10,5,10" Width="80" Height="30" Click="SubmitButton_Click"/>
+                <Button x:Name="cancelButton" Content="Cancel" IsEnabled="False" Grid.Column="1" Margin="5,10,10,10" Width="80" Height="30" Click="CancelButton_Click"/>
+            </Grid>
+
+            <Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10" >
+                <Separator.Background>
+                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
+                </Separator.Background>
+                <Separator.RenderTransform>
+                    <ScaleTransform ScaleY="2" />
+                </Separator.RenderTransform>
+            </Separator>
+
+            <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="5" Grid.Column="0" Margin="10,20,0,0" 
+                    HorizontalAlignment="Left" Width="120" Height="30" Click="ClearSelectionButton_Click" />
+
+            <Label x:Name="selectedLabel" Grid.Row="5" Grid.Column="1" Margin="0,20,10,0" HorizontalAlignment="Right"/>
+            <Label x:Name="countLabel" Grid.Row="5" Grid.Column="2" Margin="0,20,10,0" HorizontalAlignment="Right"/>
+
+            <DataGrid x:Name="configDataGrid" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" IsReadOnly="True" 
+                    SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
+                    SelectionChanged="ConfigDataGrid_SelectionChanged">
+                <DataGrid.Resources>
+                    <ContextMenu  x:Key="RowMenu" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                        <ContextMenu.ItemContainerStyle>
+                            <Style TargetType="MenuItem">
+                                <EventSetter Event="Click" Handler="Edit_Click"/>
+                            </Style>
+                        </ContextMenu.ItemContainerStyle>
+                        <MenuItem Header="Edit..." />
+                    </ContextMenu>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"  Color="{x:Static SystemColors.HighlightColor}"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"  Color="{x:Static SystemColors.HighlightTextColor}"/>
+                </DataGrid.Resources>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="ContextMenu" Value="{StaticResource RowMenu}" />
+                        <EventSetter Event="PreviewMouseRightButtonUp" Handler="DataGridRow_PreviewMouseRightButtonUp"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding StatusID}" Value="1">
+                                <Setter Property="Background" Value="#FFC8FFC8"></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusID}" Value="2">
+                                <Setter Property="Background" Value="#FFFFC8C8"></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusID}" Value="3">
+                                <Setter Property="Background" Value="#FFC8C8FF"></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusID}" Value="4">
+                                <Setter Property="Background" Value="#FFFFFFC8"></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusID}" Value="5">
+                                <Setter Property="Background" Value="#FFFFE4C8"></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusID}" Value="6">
+                                <Setter Property="Background" Value="#FFE4C8E4"></Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusID}" Value="7">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="{StaticResource {x:Static SystemColors.ControlLightLightColorKey}}"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
+
+            <ProgressBar x:Name="configSearchProgressBar" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18"/>
+            <ProgressBar x:Name="configWorkProgressBar" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18" 
+                    IsIndeterminate="False" BorderThickness="0" Background="Transparent" Visibility="Hidden" />
+
+            <Separator Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,20,10,10" >
+                <Separator.Background>
+                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
+                </Separator.Background>
+                <Separator.RenderTransform>
+                    <ScaleTransform ScaleY="2" />
+                </Separator.RenderTransform>
+            </Separator>
+
+            <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="9" Grid.Column="0" Margin="10,10,10,20" 
+                    HorizontalAlignment="Left" Width="80" Height="30" Click="Grab_Click"/>
+
+            <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="9" Grid.Column="2" Margin="10,10,10,20" 
+                    HorizontalAlignment="Right" Width="80" Height="30" Click="Deploy_Click"/>
+
+            <Label x:Name="errorLabel" Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,20" 
+                    FontStyle="Italic" HorizontalAlignment="Center"/>
         </Grid>
 
-        <Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10" >
-            <Separator.Background>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
-            </Separator.Background>
-            <Separator.RenderTransform>
-                <ScaleTransform ScaleY="2" />
-            </Separator.RenderTransform>
-        </Separator>
-
-        <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="5" Grid.Column="0" Margin="10,20,0,0" 
-                HorizontalAlignment="Left" Width="120" Height="30" Click="ClearSelectionButton_Click" />
-
-        <Label x:Name="selectedLabel" Grid.Row="5" Grid.Column="1" Margin="0,20,10,0" HorizontalAlignment="Right"/>
-        <Label x:Name="countLabel" Grid.Row="5" Grid.Column="2" Margin="0,20,10,0" HorizontalAlignment="Right"/>
-
-        <DataGrid x:Name="configDataGrid" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" IsReadOnly="True" 
-                  SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
-                  SelectionChanged="ConfigDataGrid_SelectionChanged">
-            <DataGrid.Resources>
-                <ContextMenu  x:Key="RowMenu" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                    <MenuItem Header="Edit Local..." />
-                </ContextMenu>
-                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"  Color="{x:Static SystemColors.HighlightColor}"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"  Color="{x:Static SystemColors.HighlightTextColor}"/>
-            </DataGrid.Resources>
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="ContextMenu" Value="{StaticResource RowMenu}" />
-                    <EventSetter Event="PreviewMouseRightButtonUp" Handler="DataGridRow_PreviewMouseRightButtonUp"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding StatusID}" Value="1">
-                            <Setter Property="Background" Value="#FFC8FFC8"></Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding StatusID}" Value="2">
-                            <Setter Property="Background" Value="#FFFFC8C8"></Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding StatusID}" Value="3">
-                            <Setter Property="Background" Value="#FFC8C8FF"></Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding StatusID}" Value="4">
-                            <Setter Property="Background" Value="#FFFFFFC8"></Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding StatusID}" Value="5">
-                            <Setter Property="Background" Value="#FFFFE4C8"></Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding StatusID}" Value="6">
-                            <Setter Property="Background" Value="#FFE4C8E4"></Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding StatusID}" Value="7">
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="{StaticResource {x:Static SystemColors.ControlLightLightColorKey}}"/>
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
-        </DataGrid>
-
-        <ProgressBar x:Name="configSearchProgressBar" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18"/>
-        <ProgressBar x:Name="configWorkProgressBar" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18" 
-                     IsIndeterminate="True" BorderThickness="0" Background="Transparent" Visibility="Hidden" />
-
-        <Separator Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,20,10,10" >
-            <Separator.Background>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
-            </Separator.Background>
-            <Separator.RenderTransform>
-                <ScaleTransform ScaleY="2" />
-            </Separator.RenderTransform>
-        </Separator>
-
-        <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="9" Grid.Column="0" Margin="10,10,10,20" 
-                HorizontalAlignment="Left" Width="80" Height="30" Click="Grab_Click"/>
-
-        <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="9" Grid.Column="2" Margin="10,10,10,20" 
-                HorizontalAlignment="Right" Width="80" Height="30" Click="Deploy_Click"/>
-
-        <Label x:Name="errorLabel" Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,20" 
-               FontStyle="Italic" HorizontalAlignment="Center"/>
-
-        <Grid x:Name="editorGrid" Grid.Row="0" Grid.RowSpan="10" Grid.Column="0" Grid.ColumnSpan="3" Background="AliceBlue" Visibility="Hidden">
+        <Grid x:Name="editorGrid" Background="AliceBlue" Visibility="Hidden" IsEnabled="False">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition />
                 <RowDefinition Height="Auto"/>
@@ -190,24 +198,41 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <TextBox x:Name="pathTextBox" Grid.Row="0" Grid.Column="0" Margin="10,10,5,10" IsReadOnly="True" TextWrapping="NoWrap"/>
+            <TextBox x:Name="editorPathTextBox" Grid.Row="0" Grid.Column="0" Margin="10,10,5,10" IsReadOnly="True" 
+                     TextWrapping="NoWrap" VerticalContentAlignment="Center"/>
 
-            <Button x:Name="editorSubmitButton" Content="Save and Deploy" Grid.Row="0" Grid.Column="1" Margin="5,10,5,10" Height="30" Padding="10,0,10,0"
-                    Click="EditorSubmit_Click"/>
-            
-            <Button x:Name="editorCancelButton" Content="Cancel" Grid.Row="0" Grid.Column="2" Margin="5,10,10,10" Height="30" Width="80"
-                    Click="EditorCancel_Click"/>
+            <Button x:Name="editorSubmitButton" Content="Save and Deploy" Grid.Row="0" Grid.Column="1" Margin="5,10,5,10" 
+                    Height="30" Padding="10,0,10,0" Click="EditorSubmit_Click"/>
 
-            <TextBox x:Name="editorTextBox" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10" TextWrapping="Wrap" 
+            <Button x:Name="editorCancelButton" Content="Cancel" Grid.Row="0" Grid.Column="2" Margin="5,10,10,10" 
+                    Height="30" Width="80" Click="EditorCancel_Click"/>
+
+            <ToolBarTray Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,10,0" IsLocked="True">
+                <ToolBarTray.Background>
+                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionColorKey}}"/>
+                </ToolBarTray.Background>
+                <ToolBar>
+                    <CheckBox IsChecked="False" Checked="WrapText_Checked" Unchecked="WrapText_Unhecked">
+                        <TextBlock Margin="10,2,10,2">Wrap Text</TextBlock>
+                    </CheckBox>
+                    <Separator/>
+                    <CheckBox IsChecked="False" Checked="SpellCheck_Checked" Unchecked="SpellCheck_Unchecked">
+                        <TextBlock Margin="10,2,10,2">Spell Check</TextBlock>
+                    </CheckBox>
+                </ToolBar>
+            </ToolBarTray>
+
+            <TextBox x:Name="editorTextBox" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10" TextWrapping="NoWrap" 
                      TextAlignment="Left" FontFamily="Cascadia Mono" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" 
-                     ScrollViewer.CanContentScroll="True" AcceptsReturn="True" AcceptsTab="True" SpellCheck.IsEnabled="False"/>
+                     ScrollViewer.CanContentScroll="True" AcceptsReturn="True" AcceptsTab="True" SpellCheck.IsEnabled="False"
+                     PreviewMouseWheel="EditorTextBox_PreviewMouseWheel" PreviewKeyDown="EditorTextBox_PreviewKeyDown"/>
 
-            <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,10,10" Height="18">
+            <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,10,10" Height="18">
                 <StatusBar.Background>
                     <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionColorKey}}"/>
                 </StatusBar.Background>
                 <StatusBarItem Height="18" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="0">
-                    <ProgressBar x:Name="editorProgressBar" Margin="0" Padding="0" IsIndeterminate="True" BorderThickness="0" 
+                    <ProgressBar x:Name="editorProgressBar" Margin="0" Padding="0" IsIndeterminate="False" BorderThickness="0" 
                                  Background="Transparent" Visibility="Hidden" />
                 </StatusBarItem>
             </StatusBar>

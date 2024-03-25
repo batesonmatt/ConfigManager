@@ -76,9 +76,13 @@ namespace ConfigManager
 
         private void RenderData()
         {
+            searchBox.IsEnabled = false;
             pluginComboBox.IsEnabled = false;
             dateComboBox.IsEnabled = false;
             submitButton.IsEnabled = false;
+            clearSelectionButton.IsEnabled = false;
+            configDataGrid.IsEnabled = false;
+
             cancelButton.IsEnabled = true;
 
             Reset();
@@ -233,9 +237,11 @@ namespace ConfigManager
                 }
             }
 
+            searchBox.IsEnabled = true;
             pluginComboBox.IsEnabled = true;
             dateComboBox.IsEnabled = true;
             submitButton.IsEnabled = true;
+            configDataGrid.IsEnabled = true;
             cancelButton.IsEnabled = false;
         }
 
@@ -383,6 +389,14 @@ namespace ConfigManager
 
                 if (result == MessageBoxResult.Yes)
                 {
+                    searchBox.IsEnabled = false;
+                    pluginComboBox.IsEnabled = false;
+                    dateComboBox.IsEnabled = false;
+                    submitButton.IsEnabled = false;
+                    clearSelectionButton.IsEnabled = false;
+                    configDataGrid.IsEnabled = false;
+                    cancelButton.IsEnabled = false;
+
                     grabButton.IsEnabled = false;
                     deployButton.IsEnabled = false;
 
@@ -414,6 +428,14 @@ namespace ConfigManager
 
                 if (result == MessageBoxResult.Yes)
                 {
+                    searchBox.IsEnabled = false;
+                    pluginComboBox.IsEnabled = false;
+                    dateComboBox.IsEnabled = false;
+                    submitButton.IsEnabled = false;
+                    clearSelectionButton.IsEnabled = false;
+                    configDataGrid.IsEnabled = false;
+                    cancelButton.IsEnabled = false;
+
                     grabButton.IsEnabled = false;
                     deployButton.IsEnabled = false;
 
@@ -433,7 +455,7 @@ namespace ConfigManager
             }
         }
 
-        private void DataGridRow_PreviewMouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void DataGridRow_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             // Ensure only one item is selected when right-clicking a row in the datagrid.
             if (sender is not null && sender is DataGridRow row)

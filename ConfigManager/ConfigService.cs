@@ -30,7 +30,7 @@ namespace ConfigManager
 
         private readonly Dictionary<ConfigStatus, ConfigStatusArgs> _configStatusDictionary = new()
         {
-            { ConfigStatus.LocalModified, new(1, "File has changes in local plugin directory", "Deploy") },
+            { ConfigStatus.LocalModified, new(1, "File has changes in local plugin directory (SVN)", "Deploy") },
             { ConfigStatus.LiveModified, new(2, "File has changes in VMServices", "Grab") },
             { ConfigStatus.NotDeployed, new(3, "File has not been deployed to VMServices", "Deploy") },
             { ConfigStatus.ReleaseModified, new(4, "File has changes in Release directory", "Deploy") },
@@ -72,7 +72,7 @@ namespace ConfigManager
             _configDataTable.Columns.Add("ID", typeof(int));
             _configDataTable.Columns.Add("Plugin", typeof(string));
             _configDataTable.Columns.Add("File", typeof(string));
-            _configDataTable.Columns.Add("Modified (Local)", typeof(DateTime));
+            _configDataTable.Columns.Add("Modified (SVN)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Release)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Debug)", typeof(DateTime));
             _configDataTable.Columns.Add("Modified (Live)", typeof(DateTime));

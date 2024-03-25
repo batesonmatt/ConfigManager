@@ -162,9 +162,23 @@
                 </DataGrid.RowStyle>
             </DataGrid>
 
-            <ProgressBar x:Name="configSearchProgressBar" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18"/>
-            <ProgressBar x:Name="configWorkProgressBar" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18" 
-                    IsIndeterminate="False" BorderThickness="0" Background="Transparent" Visibility="Hidden" />
+            <StatusBar Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18">
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid></Grid>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBar.Background>
+                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionColorKey}}"/>
+                </StatusBar.Background>
+                <StatusBarItem Height="18" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="0">
+                    <ProgressBar x:Name="configSearchProgressBar" Margin="0" Padding="0" BorderThickness="0" Background="Transparent" />
+                </StatusBarItem>
+                <StatusBarItem Height="18" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="0">
+                    <ProgressBar x:Name="configWorkProgressBar" Margin="0" Padding="0" BorderThickness="0" Background="Transparent"
+                                 IsIndeterminate="False" Visibility="Hidden"/>
+                </StatusBarItem>
+            </StatusBar>
 
             <Separator Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,20,10,10" >
                 <Separator.Background>
@@ -176,10 +190,42 @@
             </Separator>
 
             <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="9" Grid.Column="0" Margin="10,10,10,20" 
-                    HorizontalAlignment="Left" Width="80" Height="30" Click="Grab_Click"/>
+                    HorizontalAlignment="Left" Width="80" Height="30" Click="Grab_Click"
+                    ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                <Button.ToolTip>
+                    <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                        <StackPanel Margin="10">
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                Download the selected config files from VMServices to the local directories on this machine.
+                            </TextBlock>
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                This will overwrite any existing files.
+                            </TextBlock>
+                            <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                            <TextBlock FontStyle="Italic" TextWrapping="Wrap">You might have pending changes in SVN afterward.</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
 
             <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="9" Grid.Column="2" Margin="10,10,10,20" 
-                    HorizontalAlignment="Right" Width="80" Height="30" Click="Deploy_Click"/>
+                    HorizontalAlignment="Right" Width="80" Height="30" Click="Deploy_Click"
+                    ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                <Button.ToolTip>
+                    <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                        <StackPanel Margin="10">
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                Upload the latest, local version of the selected config files to VMServices, and replace the other local copies.
+                            </TextBlock>
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                This will overwrite any existing files.
+                            </TextBlock>
+                            <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                            <TextBlock FontStyle="Italic" TextWrapping="Wrap">You might have pending changes in SVN afterward.</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
 
             <Label x:Name="errorLabel" Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,20" 
                     FontStyle="Italic" HorizontalAlignment="Center"/>
@@ -202,10 +248,39 @@
                      TextWrapping="NoWrap" VerticalContentAlignment="Center"/>
 
             <Button x:Name="editorSubmitButton" Content="Save and Deploy" Grid.Row="0" Grid.Column="1" Margin="5,10,5,10" 
-                    Height="30" Padding="10,0,10,0" Click="EditorSubmit_Click"/>
+                    Height="30" Padding="10,0,10,0" Click="EditorSubmit_Click"
+                    ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                <Button.ToolTip>
+                    <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                        <StackPanel Margin="10">
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                Save changes to this config file, upload it to VMServices, and replace the other local copies.
+                            </TextBlock>
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                This will overwrite any existing files.
+                            </TextBlock>
+                            <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                            <TextBlock FontStyle="Italic" TextWrapping="Wrap">You might have pending changes in SVN afterward.</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
 
             <Button x:Name="editorCancelButton" Content="Cancel" Grid.Row="0" Grid.Column="2" Margin="5,10,10,10" 
-                    Height="30" Width="80" Click="EditorCancel_Click"/>
+                    Height="30" Width="80" Click="EditorCancel_Click"
+                    ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                <Button.ToolTip>
+                    <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                        <StackPanel Margin="10">
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                Return to the main screen.
+                            </TextBlock>
+                            <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                            <TextBlock FontStyle="Italic" TextWrapping="Wrap">Changes to this file will not be saved.</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
 
             <ToolBarTray Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,10,0" IsLocked="True">
                 <ToolBarTray.Background>
@@ -222,10 +297,13 @@
                 </ToolBar>
             </ToolBarTray>
 
+            <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0" Content="Hint: Use Ctrl+Scroll to zoom" 
+                   VerticalAlignment="Center" HorizontalAlignment="Right" FontStyle="Italic"/>
+
             <TextBox x:Name="editorTextBox" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10" TextWrapping="NoWrap" 
                      TextAlignment="Left" FontFamily="Cascadia Mono" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" 
                      ScrollViewer.CanContentScroll="True" AcceptsReturn="True" AcceptsTab="True" SpellCheck.IsEnabled="False"
-                     PreviewMouseWheel="EditorTextBox_PreviewMouseWheel" PreviewKeyDown="EditorTextBox_PreviewKeyDown"/>
+                     PreviewMouseWheel="EditorTextBox_PreviewMouseWheel"/>
 
             <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,10,10" Height="18">
                 <StatusBar.Background>

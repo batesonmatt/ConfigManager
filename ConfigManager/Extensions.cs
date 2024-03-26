@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace ConfigManager
@@ -117,6 +118,42 @@ namespace ConfigManager
             return result;
         }
 
+        public static bool FileContains(this FileInfo fileInfo, string searchText)
+        {
+            if (fileInfo is null || !fileInfo.Exists)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return true;
+            }
+
+            bool result = false;
+            IEnumerable<string> lines;
+            string line;
+
+            try
+            {
+                lines = File.ReadLines(fileInfo.FullName);
+                using IEnumerator<string> enumerator = lines.GetEnumerator();
+
+                while (!result && enumerator.MoveNext())
+                {
+                    line = enumerator.Current;
+                    result = line.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+                }
+
+            }
+            catch
+            {
+                result = false;
+            }
+
+            return result;
+        }
+
         public static bool FileNameContains(this FileInfo fileInfo, string searchText)
         {
             _ = fileInfo ?? throw new ArgumentNullException(nameof(fileInfo));
@@ -125,7 +162,7 @@ namespace ConfigManager
 
             try
             {
-                if (string.IsNullOrWhiteSpace(searchText) || searchText.Trim() == string.Empty)
+                if (string.IsNullOrWhiteSpace(searchText))
                 {
                     result = true;
                 }

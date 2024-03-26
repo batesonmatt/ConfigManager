@@ -6,9 +6,7 @@
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
         xmlns:local="clr-namespace:ConfigManager"
         mc:Ignorable="d"
-        Title="Config Manager"
-        Height="540" Width="840"
-        MinHeight="500" MinWidth="600"
+        Title="Config Manager" Height="640" Width="860" MinHeight="500" MinWidth="700"
         FontSize="14" WindowStartupLocation="CenterScreen" Background="AliceBlue" BorderThickness="1">
 
     <Window.Resources>
@@ -30,7 +28,6 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -59,45 +56,171 @@
                 </Label.Background>
             </Label>
 
-            <Label x:Name="searchLabel" Content="Search by Name" Grid.Row="1" Grid.Column="0" Margin="10,0,5,0" HorizontalAlignment="Left"/>
-            <TextBox x:Name="searchBox" Grid.Row="2" Grid.Column="0" Margin="10,0,5,10" HorizontalAlignment="Stretch" 
-                VerticalContentAlignment="Center" Height="25" TextAlignment="Left" MaxLength="50" TextWrapping="NoWrap" />
+            <GroupBox x:Name="searchControls" Header="Search (Optional)" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" 
+                      Margin="10,0" FlowDirection="LeftToRight">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-            <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="1" Grid.Column="1" Margin="5,0,5,0" HorizontalAlignment="Left"/>
-            <ComboBox x:Name="pluginComboBox" Grid.Row="2" Grid.Column="1" Margin="5,0,5,10" HorizontalAlignment="Stretch" Height="25">
-                <ComboBoxItem Content="All" IsSelected="True" />
-                <ComboBoxItem Content="Adjuster" />
-                <ComboBoxItem Content="AuditArchive" />
-                <ComboBoxItem Content="AutoDialer2.0" />
-                <ComboBoxItem Content="BasicDBMaint" />
-                <ComboBoxItem Content="DBI_DailyActivityReport" />
-                <ComboBoxItem Content="EDI_Archive" />
-                <ComboBoxItem Content="Notes" />
-                <ComboBoxItem Content="ProfitPal" />
-                <ComboBoxItem Content="Reporter" />
-                <ComboBoxItem Content="Uploader" />
-            </ComboBox>
+                    <TextBox x:Name="searchBox" Grid.Column="0" Margin="10" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" 
+                             Height="25" TextAlignment="Left" MaxLength="100" TextWrapping="NoWrap"/>
 
-            <Label x:Name="dateLabel" Content="Date Range" Grid.Row="1" Grid.Column="2" Margin="5,0,10,0" HorizontalAlignment="Left"/>
-            <ComboBox x:Name="dateComboBox" Grid.Row="2" Grid.Column="2" Margin="5,0,10,10" HorizontalAlignment="Stretch" Height="25">
-                <ComboBoxItem Content="All Time" IsSelected="True" />
-                <ComboBoxItem Content="Today" />
-                <ComboBoxItem Content="Past Week" />
-                <ComboBoxItem Content="Past Month" />
-                <ComboBoxItem Content="Past Year" />
-            </ComboBox>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="10" VerticalAlignment="Center">
+                        <RadioButton x:Name="searchNameRadioButton" GroupName="searchMethod" Content="File name" IsChecked="True"
+                                     Margin="0,0,10,0" VerticalContentAlignment="Center" ToolTipService.ShowOnDisabled="True" 
+                                     ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                            <RadioButton.ToolTip>
+                                <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                                    <StackPanel Margin="10">
+                                        <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                            Search only the file name for the given text.
+                                        </TextBlock>
+                                        <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                            This does not search the full path of the file.
+                                        </TextBlock>
+                                        <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                                        <TextBlock FontStyle="Italic" TextWrapping="Wrap">Attempts to search each file version.</TextBlock>
+                                    </StackPanel>
+                                </ToolTip>
+                            </RadioButton.ToolTip>
+                        </RadioButton>
 
-            <Grid Grid.Row="3" Grid.Column="2" HorizontalAlignment="Right">
+                        <RadioButton x:Name="searchContentRadioButton" GroupName="searchMethod" Content="Whole file" 
+                                     VerticalContentAlignment="Center" ToolTipService.ShowOnDisabled="True" 
+                                     ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                            <RadioButton.ToolTip>
+                                <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                                    <StackPanel Margin="10">
+                                        <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                            Search both the file name and the contents of the file for the given text.
+                                        </TextBlock>
+                                        <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                            If the text is found in the file name, this will not search the file contents.
+                                        </TextBlock>
+                                        <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                                        <TextBlock FontStyle="Italic" TextWrapping="Wrap">Attempts to search each file version.</TextBlock>
+                                    </StackPanel>
+                                </ToolTip>
+                            </RadioButton.ToolTip>
+                        </RadioButton>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+
+            <GroupBox x:Name="filterControls" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                      Margin="10" FlowDirection="LeftToRight">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label x:Name="pluginLabel" Content="Plugin" Grid.Row="0" Grid.Column="0" Margin="10,5" Padding="0" 
+                           HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+                    
+                    <ComboBox x:Name="pluginComboBox" Grid.Row="1" Grid.Column="0" Margin="10,0,5,10" HorizontalAlignment="Stretch" 
+                              Height="25" ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" 
+                              ToolTipService.ShowDuration="5000">
+                        <ComboBox.ToolTip>
+                            <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                                <StackPanel Margin="10">
+                                    <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                        Filter by the config file's plugin (job) type.
+                                    </TextBlock>
+                                    <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                                    <TextBlock FontStyle="Italic" TextWrapping="Wrap">Select "All" to include all plugin types.</TextBlock>
+                                </StackPanel>
+                            </ToolTip>
+                        </ComboBox.ToolTip>
+                        <ComboBoxItem Content="All" IsSelected="True" />
+                        <ComboBoxItem Content="Adjuster" />
+                        <ComboBoxItem Content="AuditArchive" />
+                        <ComboBoxItem Content="AutoDialer2.0" />
+                        <ComboBoxItem Content="BasicDBMaint" />
+                        <ComboBoxItem Content="DBI_DailyActivityReport" />
+                        <ComboBoxItem Content="EDI_Archive" />
+                        <ComboBoxItem Content="Notes" />
+                        <ComboBoxItem Content="ProfitPal" />
+                        <ComboBoxItem Content="Reporter" />
+                        <ComboBoxItem Content="Uploader" />
+                    </ComboBox>
+
+                    <Label x:Name="dateLabel" Content="Date Range" Grid.Row="0" Grid.Column="1" Margin="10,5" Padding="0"
+                           HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+                    
+                    <ComboBox x:Name="dateComboBox" Grid.Row="1" Grid.Column="1" Margin="10,0,5,10" HorizontalAlignment="Stretch" 
+                              Height="25" ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" 
+                              ToolTipService.ShowDuration="5000">
+                        <ComboBox.ToolTip>
+                            <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                                <StackPanel Margin="10">
+                                    <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                        Filter by the config file's last modified date and time.
+                                    </TextBlock>
+                                    <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                                    <TextBlock FontStyle="Italic" TextWrapping="Wrap">Select "All Time" to ignore the date range.</TextBlock>
+                                </StackPanel>
+                            </ToolTip>
+                        </ComboBox.ToolTip>
+                        <ComboBoxItem Content="All Time" IsSelected="True" />
+                        <ComboBoxItem Content="Today" />
+                        <ComboBoxItem Content="Past Week" />
+                        <ComboBoxItem Content="Past Month" />
+                        <ComboBoxItem Content="Past Year" />
+                    </ComboBox>
+                </Grid>
+            </GroupBox>
+
+            <Grid Grid.Row="2" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,10,25">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button x:Name="submitButton" Content="Go" Grid.Column="0" Margin="10,10,5,10" Width="80" Height="30" Click="SubmitButton_Click"/>
-                <Button x:Name="cancelButton" Content="Cancel" IsEnabled="False" Grid.Column="1" Margin="5,10,10,10" Width="80" Height="30" Click="CancelButton_Click"/>
+                <Button x:Name="submitButton" Content="Go" Grid.Column="0" Margin="10,0" Width="80" Height="30" Click="SubmitButton_Click"
+                        ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="8000">
+                    <Button.ToolTip>
+                        <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                            <StackPanel Margin="10">
+                                <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                    Begin searching for any config files matching the criteria.
+                                </TextBlock>
+                                <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                    Looks for any existing config files in your local plugin directory, before attempting to search for versions in the other local and live directories.
+                                </TextBlock>
+                                <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                                <TextBlock FontStyle="Italic" TextWrapping="Wrap">
+                                    If the config file does not exist in your local plugin directory, it will not appear in the results.
+                                </TextBlock>
+                            </StackPanel>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
+
+                <Button x:Name="cancelButton" Content="Cancel" IsEnabled="False" Grid.Column="1" Margin="10,0" Width="80" Height="30" 
+                        Click="CancelButton_Click" ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" 
+                        ToolTipService.ShowDuration="5000">
+                    <Button.ToolTip>
+                        <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                            <StackPanel Margin="10">
+                                <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                    Cancel the search.
+                                </TextBlock>
+                                <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                                <TextBlock FontStyle="Italic" TextWrapping="Wrap">Any files found before cancelling will not appear.</TextBlock>
+                            </StackPanel>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
             </Grid>
 
-            <Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10" >
+            <Separator Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10" >
                 <Separator.Background>
                     <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
                 </Separator.Background>
@@ -106,13 +229,32 @@
                 </Separator.RenderTransform>
             </Separator>
 
-            <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="5" Grid.Column="0" Margin="10,20,0,0" 
-                    HorizontalAlignment="Left" Width="120" Height="30" Click="ClearSelectionButton_Click" />
+            <Button x:Name="clearSelectionButton" Content="Clear Selection" IsEnabled="False" Grid.Row="4" Grid.Column="0" Margin="10,20,0,0" 
+                    HorizontalAlignment="Left" Width="120" Height="30" Click="ClearSelectionButton_Click"
+                    ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
+                <Button.ToolTip>
+                    <ToolTip Background="GhostWhite" BorderBrush="LightSteelBlue" BorderThickness="1" FontSize="14" MaxWidth="350">
+                        <StackPanel Margin="10">
+                            <TextBlock Margin="0,0,0,5" TextWrapping="Wrap">
+                                Unselect all currently selected items in the grid.
+                            </TextBlock>
+                            <Border BorderBrush="LightSteelBlue" BorderThickness="0,1,0,0" Margin="0,8"/>
+                            <TextBlock FontStyle="Italic" TextWrapping="Wrap">This does not delete any files.</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
 
-            <Label x:Name="selectedLabel" Grid.Row="5" Grid.Column="1" Margin="0,20,10,0" HorizontalAlignment="Right"/>
-            <Label x:Name="countLabel" Grid.Row="5" Grid.Column="2" Margin="0,20,10,0" HorizontalAlignment="Right"/>
+            <StackPanel x:Name="configResultsStackPanel" Orientation="Horizontal" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" 
+                        Margin="0,20,10,0" HorizontalAlignment="Right" Visibility="Hidden">
+                <Label x:Name="selectedLabel" />
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0"/>
+                <Label x:Name="countLabel" />
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0"/>
+                <Label Content="Right-click a row for more options" FontStyle="Italic" />
+            </StackPanel>
 
-            <DataGrid x:Name="configDataGrid" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" IsReadOnly="True" 
+            <DataGrid x:Name="configDataGrid" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" IsReadOnly="True" 
                     SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
                     SelectionChanged="ConfigDataGrid_SelectionChanged">
                 <DataGrid.Resources>
@@ -162,7 +304,7 @@
                 </DataGrid.RowStyle>
             </DataGrid>
 
-            <StatusBar Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18">
+            <StatusBar Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" Height="18">
                 <StatusBar.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Grid></Grid>
@@ -180,7 +322,7 @@
                 </StatusBarItem>
             </StatusBar>
 
-            <Separator Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,20,10,10" >
+            <Separator Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,20,10,10" >
                 <Separator.Background>
                     <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
                 </Separator.Background>
@@ -189,7 +331,7 @@
                 </Separator.RenderTransform>
             </Separator>
 
-            <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="9" Grid.Column="0" Margin="10,10,10,20" 
+            <Button x:Name="grabButton" Content="GRAB" IsEnabled="False" Grid.Row="8" Grid.Column="0" Margin="10,10,10,20" 
                     HorizontalAlignment="Left" Width="80" Height="30" Click="Grab_Click"
                     ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
                 <Button.ToolTip>
@@ -208,7 +350,7 @@
                 </Button.ToolTip>
             </Button>
 
-            <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="9" Grid.Column="2" Margin="10,10,10,20" 
+            <Button x:Name="deployButton" Content="DEPLOY" IsEnabled="False" Grid.Row="8" Grid.Column="2" Margin="10,10,10,20" 
                     HorizontalAlignment="Right" Width="80" Height="30" Click="Deploy_Click"
                     ToolTipService.ShowOnDisabled="True" ToolTipService.BetweenShowDelay="1000" ToolTipService.ShowDuration="5000">
                 <Button.ToolTip>
@@ -227,7 +369,7 @@
                 </Button.ToolTip>
             </Button>
 
-            <Label x:Name="errorLabel" Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,20" 
+            <Label x:Name="errorLabel" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,20" 
                     FontStyle="Italic" HorizontalAlignment="Center"/>
         </Grid>
 

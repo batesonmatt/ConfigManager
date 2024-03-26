@@ -44,6 +44,25 @@ namespace ConfigManager
             _selectedGoodRecords = 0;
         }
 
+        private FileSearchMethod GetSearchMethod()
+        {
+            if (searchNameRadioButton.IsChecked == true)
+            {
+                return FileSearchMethod.FileName;
+            }
+            else if (searchContentRadioButton.IsChecked == true)
+            {
+                return FileSearchMethod.FileContent;
+            }
+
+            if (string.IsNullOrWhiteSpace(searchBox.Text))
+            {
+                return FileSearchMethod.None;
+            }
+
+            return FileSearchMethod.None;
+        }
+
         private PluginType GetPluginType()
         {
             return pluginComboBox.SelectedIndex switch
@@ -76,9 +95,8 @@ namespace ConfigManager
 
         private void RenderData()
         {
-            searchBox.IsEnabled = false;
-            pluginComboBox.IsEnabled = false;
-            dateComboBox.IsEnabled = false;
+            searchControls.IsEnabled = false;
+            filterControls.IsEnabled = false;
             submitButton.IsEnabled = false;
             clearSelectionButton.IsEnabled = false;
             configDataGrid.IsEnabled = false;
@@ -89,7 +107,7 @@ namespace ConfigManager
 
             if (!_configWorker.IsBusy)
             {
-                ConfigSearchArgs args = new(GetPluginType(), GetDateRangeType(), searchBox.Text);
+                ConfigSearchArgs args = new(searchBox.Text, GetSearchMethod(), GetPluginType(), GetDateRangeType());
 
                 // Fire the DoWork event.
                 _configWorker.RunWorkerAsync(args);
@@ -139,7 +157,7 @@ namespace ConfigManager
 
             if (selected > 0)
             {
-                selectedLabel.Content = $"{selected} items selected";
+                selectedLabel.Content = selected == 1 ? "1 item selected" : $"{selected} items selected";
             }
             else
             {
@@ -232,14 +250,15 @@ namespace ConfigManager
                     if (result)
                     {
                         configDataGrid.ItemsSource = _configService.GetDataView();
-                        countLabel.Content = $"{_configService.GetCount()} results";
+                        int count = _configService.GetCount();
+                        countLabel.Content = count == 1 ? "1 result" : $"{count} results";
+                        configResultsStackPanel.Visibility = Visibility.Visible;
                     }
                 }
             }
 
-            searchBox.IsEnabled = true;
-            pluginComboBox.IsEnabled = true;
-            dateComboBox.IsEnabled = true;
+            searchControls.IsEnabled = true;
+            filterControls.IsEnabled = true;
             submitButton.IsEnabled = true;
             configDataGrid.IsEnabled = true;
             cancelButton.IsEnabled = false;
@@ -252,6 +271,7 @@ namespace ConfigManager
                 configSearchProgressBar.Value = 0;
                 countLabel.Content = string.Empty;
                 selectedLabel.Content = string.Empty;
+                configResultsStackPanel.Visibility = Visibility.Hidden;
                 errorLabel.Content = string.Empty;
                 configDataGrid.ItemsSource = null;
                 configDataGrid.Items.Refresh();
@@ -384,14 +404,13 @@ namespace ConfigManager
             if (ids is not null && ids.Length > 0)
             {
                 MessageBoxResult result = MessageBox.Show(
-                    $"You are about to grab {ids.Length} config file(s).\n\nDo you wish to proceed?\n\n", "Warning",
-                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    $"You are about to grab {ids.Length} config {(ids.Length == 1 ? "file" : "files")}.\n\nDo you wish to proceed?\n\n", 
+                    "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    searchBox.IsEnabled = false;
-                    pluginComboBox.IsEnabled = false;
-                    dateComboBox.IsEnabled = false;
+                    searchControls.IsEnabled = false;
+                    filterControls.IsEnabled = false;
                     submitButton.IsEnabled = false;
                     clearSelectionButton.IsEnabled = false;
                     configDataGrid.IsEnabled = false;
@@ -423,14 +442,13 @@ namespace ConfigManager
             if (ids is not null && ids.Length > 0)
             {
                 MessageBoxResult result = MessageBox.Show(
-                    $"You are about to deploy {ids.Length} config file(s).\n\nDo you wish to proceed?\n\n", "Warning", 
+                    $"You are about to deploy {ids.Length} config {(ids.Length == 1 ? "file" : "files")}.\n\nDo you wish to proceed?\n\n", "Warning", 
                     MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    searchBox.IsEnabled = false;
-                    pluginComboBox.IsEnabled = false;
-                    dateComboBox.IsEnabled = false;
+                    searchControls.IsEnabled = false;
+                    filterControls.IsEnabled = false;
                     submitButton.IsEnabled = false;
                     clearSelectionButton.IsEnabled = false;
                     configDataGrid.IsEnabled = false;

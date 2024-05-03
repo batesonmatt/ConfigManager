@@ -168,7 +168,8 @@ namespace ConfigManager
                 }
                 else if (searchText.IndexOfAny(Path.GetInvalidFileNameChars()) < 0)
                 {
-                    result = Path.GetFileNameWithoutExtension(fileInfo.Name).Contains(searchText, StringComparison.OrdinalIgnoreCase);
+                    // result = Path.GetFileNameWithoutExtension(fileInfo.Name).Contains(searchText, StringComparison.OrdinalIgnoreCase);
+                    result = fileInfo.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
